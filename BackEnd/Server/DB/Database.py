@@ -17,8 +17,7 @@ class Database:
         "Account(id INTEGER PRIMARY KEY AUTOINCREMENT," \
         "lastname TEXT NOT NULL, " \
         "firstname TEXT NOT NULL, " \
-        "role TEXT NOT NULL)" \
-        ")")
+        "role TEXT NOT NULL CHECK(role IN ('Admin', 'Project Manager', 'Worker', 'Supervisor')))")
 
         con.commit()
 
