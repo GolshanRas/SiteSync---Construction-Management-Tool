@@ -27,6 +27,67 @@ def add_account():
 
     return jsonify({"message": "Account created!"})
 
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+
+    firstname = str(data.get("firstname", "")).strip()
+    lastname = str(data.get("lastname", "")).strip()
+    role = str(data.get("role", "")).strip()
+    password = str(data.get("password", ""))
+
+    allowed_roles = [
+        "Admin",
+        "Project Manager",
+        "Worker",
+        "Supervisor"
+    ]
+
+    if not firstname or not lastname or not role or not password:
+        return jsonify({
+            "message": "Please fill in all fields."
+        }), 400
+
+    if role not in allowed_roles:
+        return jsonify({
+            "message": "Invalid role."
+        }), 400
+
+    if db.accountExists(lastname, firstname):
+        return jsonify({
+            "message": "An account with that name already exists."
+        }), 409
+
+    db.addAccount(lastname, firstname, role, password)
+
+    return jsonify({
+        "message": "Account created!"
+    }), 201
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+
+    firstname = str(data.get("firstname", "")).strip()
+    lastname = str(data.get("lastname", "")).strip()
+    password = str(data.get("password", ""))
+
+    if not firstname or not lastname or not password:
+        return jsonify({
+            "message": "Please fill in all fields."
+        }), 400
+
+    account = db.verifyLogin(lastname, firstname, password)
+
+    if account is None:
+        return jsonify({
+            "message": "Invalid name or password."
+        }), 401
+
+    return jsonify(account)
+
+
 @app.route("/api/projects", methods=["POST"])
 def create_project():
     data = request.get_json()
@@ -104,4 +165,4 @@ def update_role(account_id):
 
 if __name__ == "__main__":
     print(app.url_map)
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000)

@@ -2,11 +2,19 @@ import { useEffect, useState } from "react";
 import CreateProject from "./CreateProject";
 import ManageProjects from "./ManageProjects";
 import RoleManagement from "./RoleManagement";
+import Login from "./Login";
 import "./App.css";
 
 function App() {
   const [message, setMessage] = useState("Connecting...");
   const [page, setPage] = useState("");
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     fetch("http://localhost:5000/api/test")
@@ -20,12 +28,31 @@ function App() {
       });
   }, []);
 
+  const handleLogin = (account) => {
+    sessionStorage.setItem("user", JSON.stringify(account));
+    setUser(account);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("user");
+    setUser(null);
+    setPage("");
+  };
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div>
       <nav className="navbar">
         <h1>SiteSync</h1>
 
         <div>
+          <span className="nav-user">
+            {user.firstname} {user.lastname} &middot; {user.role}
+          </span>
+
           <button onClick={() => setPage("manage")}>
             Manage Projects
           </button>
@@ -35,6 +62,9 @@ function App() {
           </button>
           <button onClick={() => setPage("roles")}>
             Role Management
+          </button>
+          <button onClick={handleLogout}>
+            Log Out
           </button>
         </div>
       </nav>

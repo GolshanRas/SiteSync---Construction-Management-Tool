@@ -112,3 +112,46 @@ class Database:
 
         con.commit()
         con.close()
+
+
+    def accountExists(self, lastname, firstname):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute("""
+            SELECT 1
+            FROM Account
+            WHERE lastname = ? COLLATE NOCASE
+              AND firstname = ? COLLATE NOCASE
+            LIMIT 1
+        """, (lastname, firstname))
+
+        exists = query.fetchone() is not None
+        con.close()
+
+        return exists
+
+    def verifyLogin(self, lastname, firstname, password):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute("""
+            SELECT id, firstname, lastname, role, password
+            FROM Account
+            WHERE lastname = ? COLLATE NOCASE
+              AND firstname = ? COLLATE NOCASE
+        """, (lastname, firstname))
+
+        rows = query.fetchall()
+        con.close()
+
+        for row in rows:
+            if row[4] == password:
+                return {
+                    "id": row[0],
+                    "firstname": row[1],
+                    "lastname": row[2],
+                    "role": row[3]
+                }
+
+        return None
