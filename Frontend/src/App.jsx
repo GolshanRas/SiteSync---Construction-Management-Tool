@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import CreateProject from "./CreateProject";
 import ManageProjects from "./ManageProjects";
+import RoleManagement from "./RoleManagement";
 import "./App.css";
 
 function App() {
@@ -32,6 +33,9 @@ function App() {
           <button onClick={() => setPage("create")}>
             Create Project
           </button>
+          <button onClick={() => setPage("roles")}>
+            Role Management
+          </button>
         </div>
       </nav>
 
@@ -40,6 +44,7 @@ function App() {
       {page === "manage" && <ManageProjects />}
 
       {page === "create" && <CreateProject />}
+      {page === "roles" && <RoleManagement />}
     </div>
   );
 }

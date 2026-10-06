@@ -84,3 +84,31 @@ class Database:
         con.close()
 
         return projects
+
+    def getAccounts(self):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute("""
+            SELECT id, firstname, lastname, role
+            FROM Account
+        """)
+
+        accounts = query.fetchall()
+        con.close()
+
+        return accounts
+
+
+    def updateRole(self, account_id, role):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute("""
+            UPDATE Account
+            SET role = ?
+            WHERE id = ?
+        """, (role, account_id))
+
+        con.commit()
+        con.close()

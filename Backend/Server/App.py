@@ -60,6 +60,47 @@ def get_projects():
 
     return jsonify(project_list)
 
+@app.route("/api/accounts", methods=["GET"])
+def get_accounts():
+    accounts = db.getAccounts()
+
+    account_list = []
+
+    for account in accounts:
+        account_list.append({
+            "id": account[0],
+            "firstname": account[1],
+            "lastname": account[2],
+            "role": account[3]
+        })
+
+    return jsonify(account_list)
+
+
+@app.route("/api/accounts/<int:account_id>/role", methods=["PUT"])
+def update_role(account_id):
+    data = request.get_json()
+
+    allowed_roles = [
+        "Admin",
+        "Project Manager",
+        "Worker",
+        "Supervisor"
+    ]
+
+    role = data["role"]
+
+    if role not in allowed_roles:
+        return jsonify({
+            "message": "Invalid role."
+        }), 400
+
+    db.updateRole(account_id, role)
+
+    return jsonify({
+        "message": "Role updated successfully!"
+    })
+
 
 if __name__ == "__main__":
     print(app.url_map)

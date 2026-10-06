@@ -311,3 +311,80 @@ body {
   }
 }
 
+/* ---------- ROLE MANAGEMENT ---------- */
+
+.role-table {
+  background: white;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  overflow: hidden;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.role-table-header,
+.role-table-row {
+  display: grid;
+
+  grid-template-columns: 2fr 1.5fr 1.5fr;
+
+  align-items: center;
+
+  padding: 16px 20px;
+}
+
+.role-table-header {
+  background: #f9fafb;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #6b7280;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.role-table-row {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.role-table-row:last-child {
+  border-bottom: none;
+}
+
+.role-table-row:hover {
+  background: #f9fafb;
+}
+
+.role-badge {
+  width: fit-content;
+
+  padding: 6px 10px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-table select {
+  width: 100%;
+  max-width: 180px;
+
+  padding: 9px 10px;
+
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  cursor: pointer;
+}
