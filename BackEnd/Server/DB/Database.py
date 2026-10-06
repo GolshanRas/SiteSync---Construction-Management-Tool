@@ -26,6 +26,18 @@ class Database:
             )
         """)
 
+        query.execute("""
+            CREATE TABLE IF NOT EXISTS Project (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                location TEXT,
+                start_date TEXT,
+                end_date TEXT,
+                status TEXT NOT NULL DEFAULT 'Active'
+            )
+        """)
+
         con.commit()
         con.close()
 
@@ -43,3 +55,32 @@ class Database:
 
         con.commit()
         con.close()
+
+
+    def addProject(self, name, description, location, start_date, end_date):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute(
+            """
+            INSERT INTO Project
+            (name, description, location, start_date, end_date)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (name, description, location, start_date, end_date)
+        )
+
+        con.commit()
+        con.close()
+
+    def getProjects(self):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute("SELECT * FROM Project")
+
+        projects = query.fetchall()
+
+        con.close()
+
+        return projects
