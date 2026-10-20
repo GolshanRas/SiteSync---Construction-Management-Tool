@@ -83,7 +83,7 @@ function App() {
         )}
 
       {page === "roles" && user.role === "Admin" && (
-        <RoleManagement />
+        <RoleManagement user={user} />
       )}
     </div>
   );
