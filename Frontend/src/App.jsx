@@ -57,12 +57,16 @@ function App() {
             Manage Projects
           </button>
 
-          <button onClick={() => setPage("create")}>
-            Create Project
-          </button>
-          <button onClick={() => setPage("roles")}>
-            Role Management
-          </button>
+          {["Admin", "Project Manager"].includes(user.role) && (
+            <button onClick={() => setPage("create")}>
+              Create Project
+            </button>
+          )}
+          {user.role === "Admin" && (
+            <button onClick={() => setPage("roles")}>
+              Role Management
+            </button>
+          )}
           <button onClick={handleLogout}>
             Log Out
           </button>
@@ -73,8 +77,14 @@ function App() {
 
       {page === "manage" && <ManageProjects />}
 
-      {page === "create" && <CreateProject />}
-      {page === "roles" && <RoleManagement />}
+      {page === "create" &&
+        ["Admin", "Project Manager"].includes(user.role) && (
+          <CreateProject />
+        )}
+
+      {page === "roles" && user.role === "Admin" && (
+        <RoleManagement />
+      )}
     </div>
   );
 }

@@ -144,10 +144,16 @@ function Login({ onLogin }) {
               <label htmlFor="login-userid">User ID</label>
               <input
                 id="login-userid"
-                type="number"
-                min="1"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]+"
                 value={userId}
-                onChange={(event) => setUserId(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (/^\d*$/.test(value)) {
+                    setUserId(value);
+                  }
+                }}
                 required
               />
             </div>
