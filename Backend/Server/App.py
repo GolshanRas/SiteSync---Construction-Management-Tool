@@ -95,20 +95,28 @@ def register():
 def login():
     data = request.get_json(silent=True) or {}
 
-    firstname = str(data.get("firstname", "")).strip()
-    lastname = str(data.get("lastname", "")).strip()
+    user_id = data.get("id")
     password = str(data.get("password", ""))
 
-    if not firstname or not lastname or not password:
+    if not user_id or not password:
         return jsonify({
             "message": "Please fill in all fields."
         }), 400
 
-    account = db.verifyLogin(lastname, firstname, password)
+    try:
+        user_id = int(user_id)
+        if user_id <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({
+            "message": "Invalid User ID."
+        }), 400
+
+    account = db.verifyLogin(user_id, password)
 
     if account is None:
         return jsonify({
-            "message": "Invalid name or password."
+            "message": "Invalid User ID or password."
         }), 401
 
     return jsonify(account)
@@ -116,6 +124,7 @@ def login():
 
 @app.route("/api/projects", methods=["POST"])
 @require_permission(PermissionForTasks.MANAGE_PROJECT)
+@app.route("/api/projects", methods=["POST"])
 def create_project():
     data = request.get_json()
 

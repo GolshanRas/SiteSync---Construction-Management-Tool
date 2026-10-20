@@ -131,27 +131,25 @@ class Database:
 
         return exists
 
-    def verifyLogin(self, lastname, firstname, password):
+    def verifyLogin(self, user_id, password):
         con = self.getConnection()
         query = con.cursor()
 
         query.execute("""
             SELECT id, firstname, lastname, role, password
             FROM Account
-            WHERE lastname = ? COLLATE NOCASE
-              AND firstname = ? COLLATE NOCASE
-        """, (lastname, firstname))
+            WHERE id = ?
+        """, (user_id,))
 
-        rows = query.fetchall()
+        row = query.fetchone()
         con.close()
 
-        for row in rows:
-            if row[4] == password:
-                return {
-                    "id": row[0],
-                    "firstname": row[1],
-                    "lastname": row[2],
-                    "role": row[3]
-                }
+        if row is not None and row[4] == password:
+            return {
+                "id": row[0],
+                "firstname": row[1],
+                "lastname": row[2],
+                "role": row[3]
+            }
 
         return None

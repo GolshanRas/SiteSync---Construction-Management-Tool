@@ -4,6 +4,7 @@ const ROLES = ["Admin", "Project Manager", "Supervisor", "Worker"];
 
 function Login({ onLogin }) {
   const [mode, setMode] = useState("login");
+  const [userId, setUserId] = useState("");
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [role, setRole] = useState("");
@@ -28,11 +29,17 @@ function Login({ onLogin }) {
     setNotice("");
     setLoading(true);
 
-    const account = {
-      firstname: firstname,
-      lastname: lastname,
-      password: password,
-    };
+    const account = isRegister
+      ? {
+          firstname: firstname,
+          lastname: lastname,
+          role: role,
+          password: password,
+        }
+      : {
+          id: userId,
+          password: password,
+        };
 
     if (isRegister) {
       account.role = role;
@@ -106,29 +113,45 @@ function Login({ onLogin }) {
 
           <form onSubmit={handleSubmit} className="login-form">
 
-            <div className="login-field">
-              <label htmlFor="login-firstname">First Name</label>
-              <input
-                id="login-firstname"
-                type="text"
-                autoComplete="given-name"
-                value={firstname}
-                onChange={(event) => setFirstname(event.target.value)}
-                required
-              />
-            </div>
+            {isRegister ? (
+            <>
+              <div className="login-field">
+                <label htmlFor="login-firstname">First Name</label>
+                <input
+                  id="login-firstname"
+                  type="text"
+                  autoComplete="given-name"
+                  value={firstname}
+                  onChange={(event) => setFirstname(event.target.value)}
+                  required
+                />
+              </div>
 
+              <div className="login-field">
+                <label htmlFor="login-lastname">Last Name</label>
+                <input
+                  id="login-lastname"
+                  type="text"
+                  autoComplete="family-name"
+                  value={lastname}
+                  onChange={(event) => setLastname(event.target.value)}
+                  required
+                />
+              </div>
+            </>
+          ) : (
             <div className="login-field">
-              <label htmlFor="login-lastname">Last Name</label>
+              <label htmlFor="login-userid">User ID</label>
               <input
-                id="login-lastname"
-                type="text"
-                autoComplete="family-name"
-                value={lastname}
-                onChange={(event) => setLastname(event.target.value)}
+                id="login-userid"
+                type="number"
+                min="1"
+                value={userId}
+                onChange={(event) => setUserId(event.target.value)}
                 required
               />
             </div>
+          )}
 
             {isRegister && (
               <div className="login-field">
