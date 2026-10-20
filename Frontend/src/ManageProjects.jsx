@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 
-function ManageProjects() {
+function ManageProjects({ user}) {
   const [projects, setProjects] = useState([]);
   const [message, setMessage] = useState("");
 
   const getProjects = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/projects");
+      const response = await fetch("http://localhost:5000/api/projects", {
+        method: "GET",
+        headers: {
+          "X-User-Role": user.role,
+        },
+      });
 
       const data = await response.json();
 

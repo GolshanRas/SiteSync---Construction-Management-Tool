@@ -14,28 +14,32 @@ class PermissionForTasks(StrEnum):
     UPDATE_STATUS = "update"
     ANALYSIS = "analysis"
     CONTACT = "contact" # contact supervisor
-    MANAGE_PERM = "manageP"
+    MANAGE_PERM = "managePerm"
 
 ROLE_PERMISSIONS: dict[Roles, set[PermissionForTasks]] = {
-    Roles.ADMIN:{
+        Roles.ADMIN: {
         PermissionForTasks.MANAGE_PERM,
         PermissionForTasks.MANAGE_ACCOUNTS,
+        PermissionForTasks.MANAGE_PROJECT,
+        PermissionForTasks.VIEW_PROJECT,
         PermissionForTasks.CONTACT
     },
-    Roles.WORKER:{
+    Roles.WORKER: {
         PermissionForTasks.VIEW_PROJECT,
         PermissionForTasks.UPDATE_STATUS,
         PermissionForTasks.CONTACT
     },
-    Roles.SUPERVISOR:{
+    Roles.SUPERVISOR: {
         PermissionForTasks.MANAGE_TASKS,
         PermissionForTasks.MANAGE_PROJECT,
+        PermissionForTasks.VIEW_PROJECT,
         PermissionForTasks.UPDATE_STATUS,
-        PermissionForTasks.CONTACT,
+        PermissionForTasks.CONTACT
     },
-    Roles.PM:{
+    Roles.PM: {
         PermissionForTasks.MANAGE_TASKS,
         PermissionForTasks.MANAGE_PROJECT,
+        PermissionForTasks.VIEW_PROJECT,
         PermissionForTasks.UPDATE_STATUS,
         PermissionForTasks.CONTACT,
         PermissionForTasks.ANALYSIS

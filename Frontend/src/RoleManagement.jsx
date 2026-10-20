@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 
-function RoleManagement() {
+function RoleManagement({user}) {
   const [accounts, setAccounts] = useState([]);
   const [message, setMessage] = useState("");
 
   const getAccounts = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/accounts"
-      );
+      const response = await fetch("http://localhost:5000/api/accounts", {
+      method: "GET",
+      headers: {
+        "X-User-Role": user.role,
+      },
+    });
 
       const data = await response.json();
 
@@ -36,6 +39,7 @@ function RoleManagement() {
 
           headers: {
             "Content-Type": "application/json",
+            "X-User-Role": user.role,
           },
 
           body: JSON.stringify({

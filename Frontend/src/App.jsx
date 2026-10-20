@@ -75,7 +75,7 @@ function App() {
 
       <p className="backend-status">{message}</p>
 
-      {page === "manage" && <ManageProjects />}
+      {page === "manage" && <ManageProjects user={user} />}
 
       {page === "create" &&
         ["Admin", "Project Manager"].includes(user.role) && (
