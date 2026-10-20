@@ -1,12 +1,36 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from DB.Database import Database
+from Client.Roles import *
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app)
 
 db = Database()
 
+def require_permission(permission: PermissionForTasks):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            caller_role_str = request.headers.get("X-User-Role")
+            if not caller_role_str:
+                return jsonify({"message": "Unauthorized: Missing user role"}), 401
+
+            try:
+                caller_role = Roles(caller_role_str)
+            except ValueError:
+                return jsonify({"message": f"Invalid role: '{caller_role_str}'"}), 400
+
+            allowed_permissions = ROLE_PERMISSIONS.get(caller_role, set())
+            if permission not in allowed_permissions:
+                return jsonify({
+                    "message": f"Access Denied: Role '{caller_role.value}' lacks permission '{permission.value}'"
+                }), 403
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 @app.route("/api/test")
 def test():
@@ -14,6 +38,7 @@ def test():
 
 
 @app.route("/api/accounts", methods=["POST"])
+@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
 def add_account():
 
     data = request.get_json()
@@ -28,6 +53,7 @@ def add_account():
     return jsonify({"message": "Account created!"})
 
 @app.route("/api/register", methods=["POST"])
+@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
 def register():
     data = request.get_json(silent=True) or {}
 
@@ -89,6 +115,7 @@ def login():
 
 
 @app.route("/api/projects", methods=["POST"])
+@require_permission(PermissionForTasks.MANAGE_PROJECT)
 def create_project():
     data = request.get_json()
 
@@ -103,6 +130,7 @@ def create_project():
     return jsonify({"message": "Project created successfully!"})
 
 @app.route("/api/projects", methods=["GET"])
+@require_permission(PermissionForTasks.VIEW_PROJECT)
 def get_projects():
     projects = db.getProjects()
 
@@ -122,6 +150,7 @@ def get_projects():
     return jsonify(project_list)
 
 @app.route("/api/accounts", methods=["GET"])
+@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
 def get_accounts():
     accounts = db.getAccounts()
 
@@ -139,6 +168,7 @@ def get_accounts():
 
 
 @app.route("/api/accounts/<int:account_id>/role", methods=["PUT"])
+@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
 def update_role(account_id):
     data = request.get_json()
 
@@ -165,4 +195,4 @@ def update_role(account_id):
 
 if __name__ == "__main__":
     print(app.url_map)
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000)

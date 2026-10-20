@@ -13,7 +13,6 @@ class User:
                 raise ValueError("Invalid role")
         self.role = role
 
-    #@permission(Permission.MANAGE_ROLES)
-    def roleAssignment(role: str):
-        pass
+    def permissions(self, perm: str):
+        return perm in ROLE_PERMISSIONS.get(self.role, set())
 
