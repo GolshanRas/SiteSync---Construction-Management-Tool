@@ -79,7 +79,7 @@ function App() {
 
       {page === "create" &&
         ["Admin", "Project Manager"].includes(user.role) && (
-          <CreateProject />
+          <CreateProject user={user} />
         )}
 
       {page === "roles" && user.role === "Admin" && (

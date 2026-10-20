@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function CreateProject() {
+function CreateProject({user}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -24,6 +24,7 @@ function CreateProject() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-User-Role": user.role,
         },
         body: JSON.stringify(project),
       });
