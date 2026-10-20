@@ -1,6 +1,13 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from DB.Database import Database
+import sys
+from pathlib import Path
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 from Client.Roles import *
 from functools import wraps
 
@@ -124,7 +131,6 @@ def login():
 
 @app.route("/api/projects", methods=["POST"])
 @require_permission(PermissionForTasks.MANAGE_PROJECT)
-@app.route("/api/projects", methods=["POST"])
 def create_project():
     data = request.get_json()
 
