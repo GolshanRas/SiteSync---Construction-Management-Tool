@@ -134,7 +134,7 @@ class Database:
     def verifyLogin(self, user_id, password):
         con = self.getConnection()
         query = con.cursor()
-
+        
         query.execute("""
             SELECT id, firstname, lastname, role, password
             FROM Account
