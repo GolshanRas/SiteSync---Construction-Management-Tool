@@ -1,53 +1,41 @@
 import { useState } from "react";
 
-const ROLES = ["Admin", "Project Manager", "Supervisor", "Worker"];
-
 function Login({ onLogin }) {
-  const [mode, setMode] = useState("login");
+  const [isAdminRegister, setIsAdminRegister] = useState(false)
   const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
-  const [role, setRole] = useState("");
-  const [password, setPassword] = useState("");
+  const [codeword, setCodeword] = useState("");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isRegister = mode === "register";
+  const switchToAdminRegister = () => {
+      setIsAdminRegister(true);
+      setPassword("");
+      setMessage("");
+      setNotice("");
+    };
 
-  const switchMode = (newMode) => {
-    setMode(newMode);
+  const switchToLogin = () => {
+    setIsAdminRegister(false);
     setPassword("");
+    setCodeword("");
     setMessage("");
-    setNotice("");
   };
 
-  const handleSubmit = async (event) => {
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
 
     setMessage("");
     setNotice("");
     setLoading(true);
-
-    const account = isRegister
-      ? {
-          firstname: firstname,
-          lastname: lastname,
-          role: role,
-          password: password,
-        }
-      : {
-          id: userId,
-          password: password,
-        };
-
-    if (isRegister) {
-      account.role = role;
-    }
+    const account = { id: userId, password };
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/${isRegister ? "register" : "login"}`,
+        `http://localhost:5000/api/login`,
         {
           method: "POST",
           headers: {
@@ -58,14 +46,8 @@ function Login({ onLogin }) {
       );
 
       const data = await response.json();
-
       if (!response.ok) {
-        setMessage(data.message || "Something went wrong.");
-      } else if (isRegister) {
-        setMode("login");
-        setPassword("");
-        setRole("");
-        setNotice("Account created! Log in to continue.");
+        setMessage(data.message || "Invalid credentials.");
       } else {
         onLogin(data);
       }
@@ -75,6 +57,45 @@ function Login({ onLogin }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  const handleAdminRegisterSubmit = async (event) => {
+      event.preventDefault();
+      setMessage("");
+      setNotice("");
+      setLoading(true);
+
+      try {
+        const response = await fetch("http://localhost:5000/api/register-admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstname,
+            lastname,
+            password,
+            codeword,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setMessage(data.message || "Failed to register admin.");
+        } else {
+          setIsAdminRegister(false);
+          setUserId(data.user_id ? String(data.user_id) : "");
+          setPassword("");
+          setCodeword("");
+          setNotice(
+            `Admin account created! Your User ID is ${data.user_id}. Log in below.`
+          );
+        }
+      } catch (error) {
+        console.error(error);
+        setMessage("Could not connect to the server.");
+      } finally {
+        setLoading(false);
+      }
   };
 
   return (
@@ -85,131 +106,148 @@ function Login({ onLogin }) {
 
       <div className="login-page">
         <div className="login-card">
-
-          <div className="login-tabs">
-            <button
-              type="button"
-              className={!isRegister ? "active" : ""}
-              onClick={() => switchMode("login")}
-            >
-              Log In
-            </button>
-
-            <button
-              type="button"
-              className={isRegister ? "active" : ""}
-              onClick={() => switchMode("register")}
-            >
-              Register
-            </button>
-          </div>
-
-          <h1>{isRegister ? "Create Account" : "Log In"}</h1>
+          <h1>{isAdminRegister ? "Admin Registration" : "Log In"}</h1>
           <p className="login-subtitle">
-            {isRegister
-              ? "Register a new SiteSync account."
+            {isAdminRegister
+              ? "Register a new administrator account using your codeword."
               : "Sign in to your SiteSync account."}
           </p>
 
-          <form onSubmit={handleSubmit} className="login-form">
-
-            {isRegister ? (
-            <>
-              <div className="login-field">
-                <label htmlFor="login-firstname">First Name</label>
-                <input
-                  id="login-firstname"
-                  type="text"
-                  autoComplete="given-name"
-                  value={firstname}
-                  onChange={(event) => setFirstname(event.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="login-field">
-                <label htmlFor="login-lastname">Last Name</label>
-                <input
-                  id="login-lastname"
-                  type="text"
-                  autoComplete="family-name"
-                  value={lastname}
-                  onChange={(event) => setLastname(event.target.value)}
-                  required
-                />
-              </div>
-            </>
-          ) : (
-            <div className="login-field">
-              <label htmlFor="login-userid">User ID</label>
-              <input
-                id="login-userid"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]+"
-                value={userId}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  if (/^\d*$/.test(value)) {
-                    setUserId(value);
-                  }
-                }}
-                required
-              />
-            </div>
+          {notice && <p className="login-success">{notice}</p>}
+          {message && (
+            <p className="login-error" role="alert">
+              {message}
+            </p>
           )}
 
-            {isRegister && (
+          {isAdminRegister ? (
+            <form onSubmit={handleAdminRegisterSubmit} className="login-form">
               <div className="login-field">
-                <label htmlFor="login-role">Role</label>
-                <select
-                  id="login-role"
-                  value={role}
-                  onChange={(event) => setRole(event.target.value)}
+                <label htmlFor="admin-firstname">First Name</label>
+                <input
+                  id="admin-firstname"
+                  type="text"
+                  value={firstname}
+                  onChange={(e) => setFirstname(e.target.value)}
                   required
-                >
-                  <option value="" disabled>
-                    Select a role
-                  </option>
-
-                  {ROLES.map((roleName) => (
-                    <option key={roleName} value={roleName}>
-                      {roleName}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
-            )}
 
-            <div className="login-field">
-              <label htmlFor="login-password">Password</label>
-              <input
-                id="login-password"
-                type="password"
-                autoComplete={isRegister ? "new-password" : "current-password"}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </div>
+              <div className="login-field">
+                <label htmlFor="admin-lastname">Last Name</label>
+                <input
+                  id="admin-lastname"
+                  type="text"
+                  value={lastname}
+                  onChange={(e) => setLastname(e.target.value)}
+                  required
+                />
+              </div>
 
-            {notice && <p className="login-success">{notice}</p>}
+              <div className="login-field">
+                <label htmlFor="admin-password">Password</label>
+                <input
+                  id="admin-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-            {message && (
-              <p className="login-error" role="alert">
-                {message}
-              </p>
-            )}
+              <div className="login-field">
+                <label htmlFor="admin-codeword">Admin Codeword</label>
+                <input
+                  id="admin-codeword"
+                  type="password"
+                  placeholder="Enter secret codeword"
+                  value={codeword}
+                  onChange={(e) => setCodeword(e.target.value)}
+                  required
+                />
+              </div>
 
-            <button type="submit" disabled={loading}>
-              {loading
-                ? "Please wait..."
-                : isRegister
-                ? "Create Account"
-                : "Log In"}
-            </button>
+              <button type="submit" disabled={loading}>
+                {loading ? "Registering..." : "Create Admin Account"}
+              </button>
 
-          </form>
+              <div style={{ marginTop: "1rem", textAlign: "center" }}>
+                <button
+                  type="button"
+                  onClick={switchToLogin}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#0066cc",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    padding: 0,
+                    font: "inherit",
+                  }}
+                >
+                  &larr; Back to Log In
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Regular Login Form */
+            <form onSubmit={handleLoginSubmit} className="login-form">
+              <div className="login-field">
+                <label htmlFor="login-userid">User ID</label>
+                <input
+                  id="login-userid"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]+"
+                  value={userId}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (/^\d*$/.test(value)) {
+                      setUserId(value);
+                    }
+                  }}
+                  required
+                />
+              </div>
+
+              <div className="login-field">
+                <label htmlFor="login-password">Password</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
+
+              <button type="submit" disabled={loading}>
+                {loading ? "Signing in..." : "Log In"}
+              </button>
+
+              {/* Admin Link */}
+              <div style={{ marginTop: "1.25rem", textAlign: "center", fontSize: "0.9rem" }}>
+                <button
+                  type="button"
+                  onClick={switchToAdminRegister}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#0066cc",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontWeight: 500,
+                    padding: 0,
+                    font: "inherit",
+                  }}
+                >
+                  Are you an Admin?
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>

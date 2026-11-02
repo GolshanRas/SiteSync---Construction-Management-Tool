@@ -40,28 +40,12 @@ class Database:
             )
         """)
 
-        query.execute("""
-            CREATE TABLE IF NOT EXISTS Task (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                project_id INTEGER NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                deadline TEXT,
-                progress INTEGER NOT NULL DEFAULT 0
-                    CHECK(progress BETWEEN 0 AND 100),
-                FOREIGN KEY (project_id) REFERENCES Project(id)
-            )
-        """)
-
-        query.execute("""
-            CREATE TABLE IF NOT EXISTS TaskAssignment (
-                task_id INTEGER NOT NULL,
-                account_id INTEGER NOT NULL,
-                PRIMARY KEY (task_id, account_id),
-                FOREIGN KEY (task_id) REFERENCES Task(id) ON DELETE CASCADE,
-                FOREIGN KEY (account_id) REFERENCES Account(id)
-            )
-        """)
+        query.execute(
+            """
+            INSERT INTO Account (lastname, firstname, role, password)
+            VALUES ('Admin', 'SiteSync', 'Admin', 'ReplaceWithYourPassword')
+            """
+        )
 
         con.commit()
         con.close()

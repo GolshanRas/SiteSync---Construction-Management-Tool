@@ -145,6 +145,32 @@ def register():
         "message": "Account created!"
     }), 201
 
+ADMIN_CODEWORD = "CPS714Admin"
+
+@app.route("/api/register-admin", methods=["POST"])
+def register_admin():
+    data = request.get_json(silent=True) or {}
+
+    provided_codeword = str(data.get("codeword", "")).strip()
+    firstname = str(data.get("firstname", "")).strip()
+    lastname = str(data.get("lastname", "")).strip()
+    password = str(data.get("password", ""))
+
+    if provided_codeword != ADMIN_CODEWORD:
+        return jsonify({"message": "Invalid admin codeword."}), 403
+    
+    if not firstname or not lastname or not password:
+        return jsonify({"message": "Please fill in all fields."}), 400
+
+    if db.accountExists(lastname, firstname):
+        return jsonify({"message": "An account with that name already exists."}), 409
+
+    new_user_id = db.addAccount(lastname, firstname, "Admin", password)
+
+    return jsonify({
+        "message": "Admin account created successfully!",
+        "user_id": new_user_id
+    }), 201
 
 @app.route("/api/login", methods=["POST"])
 def login():
