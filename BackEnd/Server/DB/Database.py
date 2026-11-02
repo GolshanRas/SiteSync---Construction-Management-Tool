@@ -40,13 +40,6 @@ class Database:
             )
         """)
 
-        query.execute(
-            """
-            INSERT INTO Account (lastname, firstname, role, password)
-            VALUES ('Admin', 'SiteSync', 'Admin', 'ReplaceWithYourPassword')
-            """
-        )
-
         con.commit()
         con.close()
 
