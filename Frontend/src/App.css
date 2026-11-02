@@ -680,3 +680,612 @@ body {
 
   border-radius: 6px;
 }
+
+
+/* ---------- CLICKABLE PROJECT CARD ---------- */
+
+.project-card.clickable {
+  cursor: pointer;
+}
+
+.project-card.clickable:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.project-card-link {
+  display: inline-block;
+
+  margin-top: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #2563eb;
+}
+
+.project-card.clickable:hover .project-card-link {
+  text-decoration: underline;
+}
+
+
+/* ---------- PROJECT DETAIL ---------- */
+
+.back-link {
+  margin: 0 0 18px;
+  padding: 0;
+
+  background: none;
+  border: none;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #2563eb;
+
+  cursor: pointer;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.project-summary {
+  padding: 26px 30px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.project-summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 15px;
+}
+
+.project-summary h1 {
+  margin: 0;
+
+  font-size: 28px;
+  font-weight: 650;
+
+  color: #172033;
+
+  overflow-wrap: anywhere;
+}
+
+.project-summary-description {
+  margin: 14px 0 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  color: #6b7280;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.project-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+
+  gap: 16px;
+
+  margin: 22px 0 0;
+  padding-top: 18px;
+
+  border-top: 1px solid #f1f5f9;
+}
+
+.project-facts dt {
+  margin: 0 0 4px;
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  color: #9ca3af;
+}
+
+.project-facts dd {
+  margin: 0;
+
+  font-size: 14px;
+  color: #374151;
+
+  overflow-wrap: anywhere;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 15px;
+
+  margin: 34px 0 16px;
+}
+
+.section-header h2 {
+  margin: 0;
+
+  font-size: 22px;
+  font-weight: 650;
+
+  color: #172033;
+}
+
+.action-button {
+  padding: 10px 18px;
+
+  background: #2563eb;
+  color: white;
+
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.action-button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.action-button.secondary {
+  background: white;
+  color: #374151;
+
+  border-color: #d1d5db;
+}
+
+.action-button.secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+
+/* ---------- CREATE TASK FORM (reuses .project-form) ---------- */
+
+.create-task {
+  margin-bottom: 26px;
+}
+
+.project-form .form-title {
+  margin: 0;
+
+  font-size: 20px;
+  color: #172033;
+}
+
+.project-form .field-label {
+  margin: 18px 0 7px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #374151;
+}
+
+.project-form .assignee-list {
+  max-height: 190px;
+  overflow-y: auto;
+
+  padding: 6px;
+
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.project-form .assignee-list .assignee-option {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin: 0;
+  padding: 8px 10px;
+
+  border-radius: 5px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  color: #1f2937;
+
+  cursor: pointer;
+}
+
+.project-form .assignee-list .assignee-option:hover {
+  background: #f9fafb;
+}
+
+.project-form .assignee-list .assignee-option input {
+  flex-shrink: 0;
+
+  width: 16px;
+  height: 16px;
+
+  margin: 0;
+  padding: 0;
+
+  accent-color: #2563eb;
+
+  cursor: pointer;
+}
+
+.assignee-id {
+  margin-left: auto;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  color: #9ca3af;
+}
+
+.project-form .assignee-empty {
+  padding: 12px 14px;
+
+  background: #f9fafb;
+
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  color: #6b7280;
+}
+
+.project-form .message-error {
+  margin: 18px 0 0;
+}
+
+.message-success,
+.message-error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+
+  font-size: 13px;
+
+  border-radius: 6px;
+}
+
+.message-success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.message-error {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+
+/* ---------- TASK LIST ---------- */
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+.task-card {
+  padding: 22px 24px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.04);
+}
+
+.task-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 14px;
+}
+
+.task-card h3 {
+  margin: 0;
+
+  font-size: 18px;
+  color: #172033;
+
+  overflow-wrap: anywhere;
+}
+
+.task-description {
+  margin: 10px 0 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  color: #6b7280;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.task-meta {
+  display: grid;
+
+  gap: 10px;
+
+  margin-top: 16px;
+}
+
+.task-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 8px;
+
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.task-meta-row strong {
+  min-width: 92px;
+
+  color: #374151;
+}
+
+.person-chip {
+  padding: 5px 10px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-none {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+
+/* ---------- TASK PROGRESS ---------- */
+
+.progress-row {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+.progress-track {
+  flex: 1;
+
+  height: 8px;
+
+  background: #e5e7eb;
+
+  border-radius: 999px;
+
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+
+  background: #2563eb;
+
+  border-radius: 999px;
+
+  transition: width 0.3s;
+}
+
+.progress-fill.complete {
+  background: #16a34a;
+}
+
+.progress-percent {
+  min-width: 42px;
+
+  text-align: right;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #172033;
+}
+
+.progress-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 16px;
+  padding-top: 16px;
+
+  border-top: 1px solid #f1f5f9;
+}
+
+.progress-form label {
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #374151;
+}
+
+.progress-input {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.progress-input input {
+  width: 80px;
+
+  padding: 8px 10px;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  color: #1f2937;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.progress-input input:focus {
+  border-color: #3b82f6;
+
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.progress-form button {
+  padding: 8px 16px;
+
+  background: #2563eb;
+  color: white;
+
+  border: none;
+  border-radius: 6px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.progress-form button:hover {
+  background: #1d4ed8;
+}
+
+.progress-form button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+.task-card .message-error {
+  margin: 12px 0 0;
+}
+
+@media (max-width: 650px) {
+
+  .project-summary {
+    padding: 20px;
+  }
+
+  .task-card {
+    padding: 18px;
+  }
+
+  .task-meta-row strong {
+    min-width: 100%;
+  }
+
+  .section-header {
+    margin-top: 26px;
+  }
+}
+
+
+/* ---------- EDIT TASK ---------- */
+
+.edit-button {
+  flex-shrink: 0;
+
+  padding: 6px 14px;
+
+  background: white;
+  color: #374151;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.edit-button:hover {
+  background: #f9fafb;
+}
+
+.project-form .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 25px;
+}
+
+.project-form .form-actions button {
+  margin-top: 0;
+
+  border: 1px solid #2563eb;
+}
+
+.project-form .form-actions button:hover {
+  border-color: #1d4ed8;
+}
+
+.project-form .form-actions button.secondary {
+  background: white;
+  color: #374151;
+
+  border-color: #d1d5db;
+}
+
+.project-form .form-actions button.secondary:hover {
+  background: #f9fafb;
+
+  border-color: #d1d5db;
+}
+
+.project-form .form-actions button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}

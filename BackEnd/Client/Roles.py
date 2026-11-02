@@ -21,6 +21,7 @@ ROLE_PERMISSIONS: dict[Roles, set[PermissionForTasks]] = {
         PermissionForTasks.MANAGE_PERM,
         PermissionForTasks.MANAGE_ACCOUNTS,
         PermissionForTasks.MANAGE_PROJECT,
+        PermissionForTasks.MANAGE_TASKS,
         PermissionForTasks.VIEW_PROJECT,
         PermissionForTasks.CONTACT
     },

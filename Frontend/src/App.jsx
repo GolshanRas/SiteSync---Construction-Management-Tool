@@ -8,6 +8,7 @@ import "./App.css";
 function App() {
   const [message, setMessage] = useState("Connecting...");
   const [page, setPage] = useState("");
+  const [manageKey, setManageKey] = useState(0);
   const [user, setUser] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem("user"));
@@ -53,7 +54,12 @@ function App() {
             {user.firstname} {user.lastname} &middot; {user.role}
           </span>
 
-          <button onClick={() => setPage("manage")}>
+          <button
+            onClick={() => {
+              setPage("manage");
+              setManageKey((key) => key + 1);
+            }}
+          >
             Manage Projects
           </button>
 
@@ -75,7 +81,7 @@ function App() {
 
       <p className="backend-status">{message}</p>
 
-      {page === "manage" && <ManageProjects user={user} />}
+      {page === "manage" && <ManageProjects key={manageKey} user={user} />}
 
       {page === "create" &&
         ["Admin", "Project Manager"].includes(user.role) && (

@@ -10,6 +10,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 from Client.Roles import *
 from functools import wraps
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -38,6 +39,53 @@ def require_permission(permission: PermissionForTasks):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+def parse_progress(value):
+    """Return value as a whole number from 0 to 100, or None if it isn't one."""
+    if isinstance(value, bool):
+        return None
+
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+
+    if isinstance(value, str):
+        value = value.strip()
+        if len(value) > 3 or not value.isdecimal():
+            return None
+        value = int(value)
+
+    if not isinstance(value, int) or not 0 <= value <= 100:
+        return None
+
+    return value
+
+
+def parse_id_list(value):
+    """Return a list of unique whole numbers, or None if value isn't one."""
+    if value is None:
+        return []
+
+    if not isinstance(value, list):
+        return None
+
+    ids = []
+
+    for item in value:
+        if isinstance(item, bool) or not isinstance(item, int):
+            return None
+        if item not in ids:
+            ids.append(item)
+
+    return ids
+
+
+def is_valid_date(value):
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
 
 @app.route("/api/test")
 def test():
@@ -206,6 +254,166 @@ def update_role(account_id):
     return jsonify({
         "message": "Role updated successfully!"
     })
+
+
+@app.route("/api/assignees", methods=["GET"])
+@require_permission(PermissionForTasks.MANAGE_TASKS)
+def get_assignees():
+    people = []
+
+    for account in db.getAssignableAccounts():
+        people.append({
+            "id": account[0],
+            "firstname": account[1],
+            "lastname": account[2],
+            "role": account[3]
+        })
+
+    return jsonify(people)
+
+
+@app.route("/api/projects/<int:project_id>/tasks", methods=["GET"])
+@require_permission(PermissionForTasks.VIEW_PROJECT)
+def get_tasks(project_id):
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    return jsonify(db.getTasks(project_id))
+
+
+@app.route("/api/projects/<int:project_id>/tasks", methods=["POST"])
+@require_permission(PermissionForTasks.MANAGE_TASKS)
+def create_task(project_id):
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        data = {}
+
+    name = str(data.get("name") or "").strip()
+    description = str(data.get("description") or "").strip()
+    deadline = str(data.get("deadline") or "").strip()
+    assignee_ids = parse_id_list(data.get("assignee_ids"))
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    if not name:
+        return jsonify({"message": "Task name is required."}), 400
+
+    if deadline and not is_valid_date(deadline):
+        return jsonify({"message": "Deadline must be a valid date."}), 400
+
+    if assignee_ids is None:
+        return jsonify({
+            "message": "Assignees must be a list of account IDs."
+        }), 400
+
+    assignable = {account[0] for account in db.getAssignableAccounts()}
+
+    if any(account_id not in assignable for account_id in assignee_ids):
+        return jsonify({
+            "message": "Tasks can only be assigned to workers and supervisors."
+        }), 400
+
+    task_id = db.addTask(
+        project_id,
+        name,
+        description,
+        deadline or None,
+        assignee_ids
+    )
+
+    return jsonify(db.getTask(task_id)), 201
+
+
+@app.route("/api/tasks/<int:task_id>/progress", methods=["PUT"])
+@require_permission(PermissionForTasks.MANAGE_TASKS)
+def update_task_progress(task_id):
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        data = {}
+
+    progress = parse_progress(data.get("progress"))
+
+    if progress is None:
+        return jsonify({
+            "message": "Progress must be a whole number from 0 to 100."
+        }), 400
+
+    if not db.updateTaskProgress(task_id, progress):
+        return jsonify({"message": "Task not found."}), 404
+
+    return jsonify({
+        "message": "Progress updated successfully!",
+        "progress": progress
+    })
+
+
+@app.route("/api/tasks/<int:task_id>", methods=["PUT"])
+@require_permission(PermissionForTasks.MANAGE_TASKS)
+def update_task(task_id):
+    # Only the fields that are sent get changed.
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        data = {}
+
+    fields = {}
+    assignee_ids = None
+
+    if "name" in data:
+        name = str(data["name"] or "").strip()
+
+        if not name:
+            return jsonify({"message": "Task name is required."}), 400
+
+        fields["name"] = name
+
+    if "description" in data:
+        fields["description"] = str(data["description"] or "").strip()
+
+    if "deadline" in data:
+        deadline = str(data["deadline"] or "").strip()
+
+        if deadline and not is_valid_date(deadline):
+            return jsonify({"message": "Deadline must be a valid date."}), 400
+
+        fields["deadline"] = deadline or None
+
+    if "progress" in data:
+        progress = parse_progress(data["progress"])
+
+        if progress is None:
+            return jsonify({
+                "message": "Progress must be a whole number from 0 to 100."
+            }), 400
+
+        fields["progress"] = progress
+
+    if "assignee_ids" in data:
+        if data["assignee_ids"] is not None:
+            assignee_ids = parse_id_list(data["assignee_ids"])
+
+        if assignee_ids is None:
+            return jsonify({
+                "message": "Assignees must be a list of account IDs."
+            }), 400
+
+        assignable = {account[0] for account in db.getAssignableAccounts()}
+
+        if any(account_id not in assignable for account_id in assignee_ids):
+            return jsonify({
+                "message": "Tasks can only be assigned to workers and supervisors."
+            }), 400
+
+    if not fields and assignee_ids is None:
+        return jsonify({"message": "Nothing to update."}), 400
+
+    if not db.updateTask(task_id, fields, assignee_ids):
+        return jsonify({"message": "Task not found."}), 404
+
+    return jsonify(db.getTask(task_id))
 
 
 if __name__ == "__main__":

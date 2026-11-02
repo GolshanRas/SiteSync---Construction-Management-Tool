@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import ProjectDetail from "./ProjectDetail";
 
 function ManageProjects({ user}) {
   const [projects, setProjects] = useState([]);
   const [message, setMessage] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
 
   const getProjects = async () => {
     try {
@@ -30,6 +32,16 @@ function ManageProjects({ user}) {
     getProjects();
   }, []);
 
+  if (selectedProject) {
+    return (
+      <ProjectDetail
+        project={selectedProject}
+        user={user}
+        onBack={() => setSelectedProject(null)}
+      />
+    );
+  }
+
   return (
     <div className="page">
       <h1>Manage Projects</h1>
@@ -42,7 +54,19 @@ function ManageProjects({ user}) {
         <div className="project-list">
 
           {projects.map((project) => (
-            <div className="project-card" key={project.id}>
+            <div
+              className="project-card clickable"
+              key={project.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedProject(project)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setSelectedProject(project);
+                }
+              }}
+            >
 
               <h2>{project.name}</h2>
 
@@ -65,6 +89,8 @@ function ManageProjects({ user}) {
               <p>
                 <strong>Status:</strong> {project.status}
               </p>
+
+              <span className="project-card-link">View tasks &rarr;</span>
 
             </div>
           ))}
