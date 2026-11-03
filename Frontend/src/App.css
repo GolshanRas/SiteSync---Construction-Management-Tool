@@ -248,6 +248,11 @@ body {
   color: #374151;
 }
 
+.project-card > .action-button {
+  display: block;
+  margin: 20px auto 0;
+}
+
 
 /* ---------- EMPTY PROJECT LIST ---------- */
 
@@ -1288,4 +1293,305 @@ body {
   opacity: 0.6;
 
   cursor: not-allowed;
+}
+
+
+/* ---------- PROJECT COST OVERVIEW ---------- */
+
+.cost-section {
+  margin-top: 35px;
+}
+
+.cost-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.cost-card,
+.cost-panel {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cost-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cost-card span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.cost-card strong {
+  font-size: 23px;
+  color: #172033;
+}
+
+.cost-over {
+  color: #dc2626 !important;
+}
+
+.cost-panel {
+  margin-top: 18px;
+}
+
+.cost-progress {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cost-progress > div {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 999px;
+}
+
+.cost-panel h3 {
+  margin: 22px 0 14px;
+}
+
+/* .cost-categories > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+} */
+
+.cost-form {
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+
+.cost-form select {
+  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font: inherit;
+}
+
+.cost-table-wrap {
+  overflow-x: auto;
+}
+
+.cost-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.cost-table th,
+.cost-table td {
+  padding: 13px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cost-table th {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.cost-actions {
+  white-space: nowrap;
+}
+
+.cost-actions button {
+  margin-right: 8px;
+  padding: 7px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.cost-actions button:hover {
+  background: #f1f5f9;
+}
+
+/* ---------- PLANNED VS ACTUAL COSTS ---------- */
+
+/* Clickable budget amount */
+.cost-clickable {
+  cursor: pointer;
+  border-bottom: 1px dashed #64748b;
+}
+
+.cost-clickable:hover {
+  color: #2563eb;
+}
+
+.cost-clickable:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+/* Editable budget and planned cost fields */
+.cost-inline-input {
+  width: 130px;
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #172033;
+  background: white;
+}
+
+.cost-inline-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Variance colours */
+.cost-under {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.cost-over {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+/* Total row in planned vs actual table */
+.cost-total-row {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+/* Improve table alignment */
+.cost-table td,
+.cost-table th {
+  vertical-align: middle;
+}
+
+/* Smaller screens */
+@media (max-width: 650px) {
+  .cost-inline-input {
+    width: 105px;
+  }
+
+  .cost-table {
+    min-width: 550px;
+  }
+}
+
+
+/* ---------- VIEW PROJECT BUTTON ---------- */
+
+.project-card > .action-button {
+  margin-top: 12px;
+}
+
+/* ---------- PROJECT TABS ---------- */
+
+.project-tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+.project-tab {
+  padding: 11px 22px;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.project-tab:hover {
+  background: #eff6ff;
+}
+
+.project-tab.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* ---------- PROJECT OVERVIEW ---------- */
+
+.project-overview-panel {
+  margin-top: 24px;
+  padding: 26px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.project-overview-panel h2 {
+  margin-top: 0;
+  color: #172033;
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.overview-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.overview-stat span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.overview-stat strong {
+  font-size: 23px;
+  color: #172033;
+}
+
+/* Space for future visualizations */
+
+.overview-placeholder {
+  margin-top: 30px;
+  padding: 24px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+}
+
+.overview-placeholder h3 {
+  margin-top: 0;
+  color: #172033;
+}
+
+.overview-placeholder p {
+  color: #6b7280;
+}
+
+@media (max-width: 650px) {
+  .project-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+  }
 }

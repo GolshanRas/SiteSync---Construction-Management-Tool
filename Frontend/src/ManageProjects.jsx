@@ -90,7 +90,14 @@ function ManageProjects({ user}) {
                 <strong>Status:</strong> {project.status}
               </p>
 
-              <span className="project-card-link">View tasks &rarr;</span>
+              <button
+                type="button"
+                className="action-button"
+                onClick={() => setSelectedProject(project)}
+              >
+                View Project
+              </button>
+
 
             </div>
           ))}

@@ -40,12 +40,39 @@ class Database:
             )
         """)
 
-        query.execute(
-            """
-            INSERT INTO Account (lastname, firstname, role, password)
-            VALUES ('Admin', 'SiteSync', 'Admin', 'ReplaceWithYourPassword')
-            """
-        )
+        query.execute("""
+            CREATE TABLE IF NOT EXISTS ProjectExpense (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                description TEXT,
+                amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
+                expense_date TEXT NOT NULL,
+                FOREIGN KEY (project_id)
+                    REFERENCES Project(id) ON DELETE CASCADE
+            )
+        """)
+
+        query.execute("PRAGMA table_info(Project)")
+        columns = [column[1] for column in query.fetchall()]
+
+        if "budget_cents" not in columns:
+            query.execute("""
+                ALTER TABLE Project
+                ADD COLUMN budget_cents INTEGER NOT NULL DEFAULT 0
+            """)
+
+        query.execute("""
+            CREATE TABLE IF NOT EXISTS PlannedCost (
+                project_id INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                amount_cents INTEGER NOT NULL DEFAULT 0
+                    CHECK(amount_cents >= 0),
+                PRIMARY KEY (project_id, category),
+                FOREIGN KEY (project_id)
+                    REFERENCES Project(id) ON DELETE CASCADE
+            )
+        """)
 
         con.commit()
         con.close()
@@ -352,6 +379,216 @@ class Database:
                 )
 
             con.commit()
+
+            return True
+
+        
+        finally:
+            con.close()
+    def getProjectExpenses(self, project_id):
+        con = self.getConnection()
+        query = con.cursor()
+
+        query.execute("""
+            SELECT id, project_id, category, description,
+                amount_cents, expense_date
+            FROM ProjectExpense
+            WHERE project_id = ?
+            ORDER BY expense_date DESC, id DESC
+        """, (project_id,))
+
+        rows = query.fetchall()
+        con.close()
+
+        return [
+            {
+                "id": row[0],
+                "project_id": row[1],
+                "category": row[2],
+                "description": row[3],
+                "amount_cents": row[4],
+                "expense_date": row[5]
+            }
+            for row in rows
+        ]
+    def addProjectExpense(self, project_id, category, description, amount_cents, expense_date):
+        con = self.getConnection()
+
+        try:
+            query = con.cursor()
+
+            query.execute("""
+                INSERT INTO ProjectExpense
+                (project_id, category, description, amount_cents, expense_date)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                project_id, category, description,
+                amount_cents, expense_date
+            ))
+
+            con.commit()
+            return query.lastrowid
+
+        finally:
+            con.close()
+
+    def updateProjectExpense(self, project_id, expense_id, category, description, amount_cents, expense_date):
+        con = self.getConnection()
+
+        try:
+            query = con.cursor()
+
+            query.execute("""
+                UPDATE ProjectExpense
+                SET category = ?,
+                    description = ?,
+                    amount_cents = ?,
+                    expense_date = ?
+                WHERE id = ? AND project_id = ?
+            """, (
+                category, description, amount_cents,
+                expense_date, expense_id, project_id
+            ))
+
+            con.commit()
+            return query.rowcount > 0
+
+        finally:
+            con.close()
+    def deleteProjectExpense(self, project_id, expense_id):
+        con = self.getConnection()
+
+        try:
+            query = con.cursor()
+
+            query.execute("""
+                DELETE FROM ProjectExpense
+                WHERE id = ? AND project_id = ?
+            """, (expense_id, project_id))
+
+            con.commit()
+            return query.rowcount > 0
+
+        finally:
+            con.close()
+
+    
+    def updateProjectBudget(self, project_id, budget_cents):
+        con = self.getConnection()
+
+        try:
+            query = con.cursor()
+
+            query.execute("""
+                UPDATE Project
+                SET budget_cents = ?
+                WHERE id = ?
+            """, (budget_cents, project_id))
+
+            con.commit()
+            return query.rowcount > 0
+
+        finally:
+            con.close()
+    
+    def getProjectCostOverview(self, project_id):
+        con = self.getConnection()
+
+        try:
+            query = con.cursor()
+
+            # Get the project's total budget
+            query.execute("""
+                SELECT budget_cents
+                FROM Project
+                WHERE id = ?
+            """, (project_id,))
+
+            project = query.fetchone()
+
+            if project is None:
+                return None
+
+            budget_cents = project[0]
+
+            # Calculate total expenses
+            query.execute("""
+                SELECT COALESCE(SUM(amount_cents), 0)
+                FROM ProjectExpense
+                WHERE project_id = ?
+            """, (project_id,))
+
+            spent_cents = query.fetchone()[0]
+
+            remaining_cents = budget_cents - spent_cents
+
+            # Calculate budget utilization
+            utilization_percent = (
+                round(spent_cents / budget_cents * 100, 2)
+                if budget_cents > 0
+                else 0
+            )
+
+            # Calculate spending by category
+            query.execute("""
+                SELECT category, SUM(amount_cents)
+                FROM ProjectExpense
+                WHERE project_id = ?
+                GROUP BY category
+            """, (project_id,))
+
+            category_totals = {
+                row[0]: row[1]
+                for row in query.fetchall()
+            }
+
+            return {
+                "project_id": project_id,
+                "budget_cents": budget_cents,
+                "spent_cents": spent_cents,
+                "remaining_cents": remaining_cents,
+                "utilization_percent": utilization_percent,
+                "category_totals": category_totals
+            }
+
+        finally:
+            con.close()
+
+    def getPlannedCosts(self, project_id):
+        con = self.getConnection()
+        try:
+            rows = con.execute("""
+                SELECT category, amount_cents
+                FROM PlannedCost
+                WHERE project_id = ?
+            """, (project_id,)).fetchall()
+
+            return dict(rows)
+        finally:
+            con.close()
+
+
+    def savePlannedCosts(self, project_id, costs):
+        con = self.getConnection()
+        try:
+            with con:
+                project = con.execute(
+                    "SELECT 1 FROM Project WHERE id = ?",
+                    (project_id,)
+                ).fetchone()
+
+                if project is None:
+                    return False
+
+                for category, amount in costs.items():
+                    con.execute("""
+                        INSERT INTO PlannedCost
+                            (project_id, category, amount_cents)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(project_id, category)
+                        DO UPDATE SET
+                            amount_cents = excluded.amount_cents
+                    """, (project_id, category, amount))
 
             return True
         finally:

@@ -11,6 +11,7 @@ if str(BACKEND_DIR) not in sys.path:
 from Client.Roles import *
 from functools import wraps
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 app = Flask(__name__)
 CORS(app)
@@ -441,6 +442,275 @@ def update_task(task_id):
 
     return jsonify(db.getTask(task_id))
 
+
+EXPENSE_CATEGORIES = {
+    "Labour",
+    "Materials",
+    "Equipment",
+    "Travel",
+    "Other"
+}
+
+
+def validate_expense(data):
+    if not isinstance(data, dict):
+        return None, "Invalid expense data."
+
+    category = str(data.get("category") or "").strip()
+    description = str(data.get("description") or "").strip()
+    expense_date = str(data.get("expense_date") or "").strip()
+    amount = data.get("amount")
+
+    if category not in EXPENSE_CATEGORIES:
+        return None, "Please select a valid expense category."
+
+    if not expense_date or not is_valid_date(expense_date):
+        return None, "Expense date must be in YYYY-MM-DD format."
+
+    if isinstance(amount, bool) or amount is None:
+        return None, "A valid expense amount is required."
+
+    try:
+        amount_decimal = Decimal(str(amount))
+    except (InvalidOperation, ValueError):
+        return None, "Invalid expense amount."
+
+    if not amount_decimal.is_finite() or amount_decimal <= 0:
+        return None, "Expense amount must be greater than zero."
+
+    amount_cents_decimal = amount_decimal * 100
+
+    if amount_cents_decimal != amount_cents_decimal.to_integral_value():
+        return None, "Expense amount cannot exceed two decimal places."
+
+    return {
+        "category": category,
+        "description": description,
+        "amount_cents": int(amount_cents_decimal),
+        "expense_date": expense_date
+    }, None
+
+    
+# Get all expenses for a project
+@app.route("/api/projects/<int:project_id>/expenses", methods=["GET"])
+@require_permission(PermissionForTasks.VIEW_PROJECT)
+def get_project_expenses(project_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    expenses = db.getProjectExpenses(project_id)
+
+    return jsonify(expenses), 200
+
+
+# Add a new expense
+@app.route("/api/projects/<int:project_id>/expenses", methods=["POST"])
+@require_permission(PermissionForTasks.MANAGE_PROJECT)
+def create_project_expense(project_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    data = request.get_json(silent=True)
+    expense, error = validate_expense(data)
+
+    if error:
+        return jsonify({"message": error}), 400
+
+    expense_id = db.addProjectExpense(
+        project_id,
+        expense["category"],
+        expense["description"],
+        expense["amount_cents"],
+        expense["expense_date"]
+    )
+
+    return jsonify({
+        "message": "Expense added successfully!",
+        "id": expense_id
+    }), 201
+
+
+# Edit an existing expense
+@app.route(
+    "/api/projects/<int:project_id>/expenses/<int:expense_id>",
+    methods=["PUT"]
+)
+@require_permission(PermissionForTasks.MANAGE_PROJECT)
+def edit_project_expense(project_id, expense_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    data = request.get_json(silent=True)
+    expense, error = validate_expense(data)
+
+    if error:
+        return jsonify({"message": error}), 400
+
+    updated = db.updateProjectExpense(
+        project_id,
+        expense_id,
+        expense["category"],
+        expense["description"],
+        expense["amount_cents"],
+        expense["expense_date"]
+    )
+
+    if not updated:
+        return jsonify({"message": "Expense not found."}), 404
+
+    return jsonify({
+        "message": "Expense updated successfully!"
+    }), 200
+
+
+# Delete an existing expense
+@app.route(
+    "/api/projects/<int:project_id>/expenses/<int:expense_id>",
+    methods=["DELETE"]
+)
+@require_permission(PermissionForTasks.MANAGE_PROJECT)
+def delete_project_expense(project_id, expense_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    deleted = db.deleteProjectExpense(project_id, expense_id)
+
+    if not deleted:
+        return jsonify({"message": "Expense not found."}), 404
+
+    return jsonify({
+        "message": "Expense deleted successfully!"
+    }), 200
+
+
+# Get the project's financial summary
+@app.route("/api/projects/<int:project_id>/costs", methods=["GET"])
+@require_permission(PermissionForTasks.VIEW_PROJECT)
+def get_project_costs(project_id):
+
+    overview = db.getProjectCostOverview(project_id)
+
+    if overview is None:
+        return jsonify({"message": "Project not found."}), 404
+
+    return jsonify(overview), 200
+
+
+# Set or update the project's total budget
+@app.route("/api/projects/<int:project_id>/budget", methods=["PUT"])
+@require_permission(PermissionForTasks.MANAGE_PROJECT)
+def update_project_budget(project_id):
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"message": "Invalid request data."}), 400
+
+    budget = data.get("budget")
+
+    if isinstance(budget, bool) or budget is None:
+        return jsonify({"message": "A valid budget is required."}), 400
+
+    try:
+        budget_decimal = Decimal(str(budget))
+    except (InvalidOperation, ValueError):
+        return jsonify({"message": "Invalid budget amount."}), 400
+
+    if not budget_decimal.is_finite() or budget_decimal < 0:
+        return jsonify({
+            "message": "Budget must be zero or greater."
+        }), 400
+
+    budget_cents_decimal = budget_decimal * 100
+
+    if budget_cents_decimal != budget_cents_decimal.to_integral_value():
+        return jsonify({
+            "message": "Budget cannot exceed two decimal places."
+        }), 400
+
+    budget_cents = int(budget_cents_decimal)
+
+    updated = db.updateProjectBudget(project_id, budget_cents)
+
+    if not updated:
+        return jsonify({"message": "Project not found."}), 404
+
+    return jsonify({
+        "message": "Project budget updated successfully!",
+        "budget_cents": budget_cents
+    }), 200
+
+    
+@app.route("/api/projects/<int:project_id>/planned-costs", methods=["GET"])
+@require_permission(PermissionForTasks.VIEW_PROJECT)
+def get_planned_costs(project_id):
+    con = db.getConnection()
+
+    try:
+        project = con.execute(
+            "SELECT 1 FROM Project WHERE id = ?",
+            (project_id,)
+        ).fetchone()
+    finally:
+        con.close()
+
+    if project is None:
+        return jsonify({"message": "Project not found."}), 404
+
+    return jsonify(db.getPlannedCosts(project_id)), 200
+
+
+@app.route("/api/projects/<int:project_id>/planned-costs", methods=["PUT"])
+@require_permission(PermissionForTasks.MANAGE_PROJECT)
+def update_planned_costs(project_id):
+    from decimal import Decimal, InvalidOperation
+
+    categories = {
+        "Labour", "Materials", "Equipment", "Travel", "Other"
+    }
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict) or set(data) != categories:
+        return jsonify({
+            "message": "Provide all five planned-cost categories."
+        }), 400
+
+    costs = {}
+
+    try:
+        for category, raw in data.items():
+            if isinstance(raw, bool) or not isinstance(
+                raw, (str, int, float)
+            ):
+                raise ValueError
+
+            value = Decimal(str(raw))
+            cents = value * 100
+
+            if (
+                not value.is_finite()
+                or value < 0
+                or cents != cents.to_integral_value()
+                or cents > 9_000_000_000_000_000
+            ):
+                raise ValueError
+
+            costs[category] = int(cents)
+
+    except (ValueError, InvalidOperation):
+        return jsonify({
+            "message": "Enter nonnegative amounts with at most two decimal places."
+        }), 400
+
+    if not db.savePlannedCosts(project_id, costs):
+        return jsonify({"message": "Project not found."}), 404
+
+    return jsonify(db.getPlannedCosts(project_id)), 200
 
 if __name__ == "__main__":
     print(app.url_map)

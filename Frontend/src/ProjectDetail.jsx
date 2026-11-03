@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import TaskForm from "./TaskForm";
 import TaskCard from "./TaskCard";
+import ProjectCosts from "./ProjectCosts";
 
 // Roles allowed to create tasks, assign people and update progress.
 // (The server checks this too; this only decides what to show.)
@@ -12,6 +13,7 @@ function ProjectDetail({ project, user, onBack }) {
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const canManage = TASK_MANAGER_ROLES.includes(user.role);
 
@@ -76,7 +78,21 @@ function ProjectDetail({ project, user, onBack }) {
       )
     );
   };
+  const totalTasks = tasks.length;
 
+  const completedTasks = tasks.filter(
+    (task) => Number(task.progress || 0) >= 100
+  ).length;
+
+  const averageProgress =
+    totalTasks === 0
+      ? 0
+      : Math.round(
+          tasks.reduce(
+            (total, task) => total + Number(task.progress || 0),
+            0
+          ) / totalTasks
+        );
   return (
     <div className="page">
 
@@ -115,51 +131,158 @@ function ProjectDetail({ project, user, onBack }) {
         </dl>
 
       </section>
+        
+      {/* ---------- PROJECT TABS ---------- */}
 
-      <div className="section-header">
-        <h2>Tasks</h2>
+      <div className="project-tabs">
+        <button
+          type="button"
+          className={
+            activeTab === "overview"
+              ? "project-tab active"
+              : "project-tab"
+          }
+          onClick={() => setActiveTab("overview")}
+        >
+          Overview
+        </button>
 
-        {canManage && (
-          <button
-            type="button"
-            className={showForm ? "action-button secondary" : "action-button"}
-            onClick={toggleForm}
-          >
-            {showForm ? "Cancel" : "+ Create Task"}
-          </button>
-        )}
+        <button
+          type="button"
+          className={
+            activeTab === "tasks"
+              ? "project-tab active"
+              : "project-tab"
+          }
+          onClick={() => setActiveTab("tasks")}
+        >
+          Tasks
+        </button>
+
+        <button
+          type="button"
+          className={
+            activeTab === "costs"
+              ? "project-tab active"
+              : "project-tab"
+          }
+          onClick={() => setActiveTab("costs")}
+        >
+          Costs
+        </button>
       </div>
 
-      {showForm && canManage && (
-        <TaskForm
-          project={project}
-          user={user}
-          onSaved={handleCreated}
-          onCancel={toggleForm}
-        />
+      {/* ---------- OVERVIEW ---------- */}
+
+      {activeTab === "overview" && (
+        <div className="project-overview-panel">
+          <h2>Project Overview</h2>
+          <p>Overview of project progress and performance.</p>
+
+          {loading ? (
+            <p>Loading project statistics...</p>
+          ) : (
+            <div className="overview-stats">
+              <div className="overview-stat">
+                <span>Total Tasks</span>
+                <strong>{totalTasks}</strong>
+              </div>
+
+              <div className="overview-stat">
+                <span>Completed Tasks</span>
+                <strong>{completedTasks}</strong>
+              </div>
+
+              <div className="overview-stat">
+                <span>Average Task Progress</span>
+                <strong>{averageProgress}%</strong>
+              </div>
+
+              <div className="overview-stat">
+                <span>Project Status</span>
+                <strong>{project.status}</strong>
+              </div>
+            </div>
+          )}
+
+          {message && (
+            <div className="message-error">{message}</div>
+          )}
+
+          <div className="overview-placeholder">
+            <h3>Project Visualizations</h3>
+            <p>
+              Future charts and project performance
+              visualizations will appear here.
+            </p>
+          </div>
+        </div>
       )}
 
-      {notice && <div className="message-success">{notice}</div>}
+      {/* ---------- TASKS ---------- */}
 
-      {message && <div className="message-error">{message}</div>}
+      {activeTab === "tasks" && (
+        <>
+          <div className="section-header">
+            <h2>Tasks</h2>
 
-      {loading ? (
-        <p>Loading tasks...</p>
-      ) : tasks.length === 0 ? (
-        <p>No tasks have been created for this project yet.</p>
-      ) : (
-        <div className="task-list">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
+            {canManage && (
+              <button
+                type="button"
+                className={
+                  showForm
+                    ? "action-button secondary"
+                    : "action-button"
+                }
+                onClick={toggleForm}
+              >
+                {showForm ? "Cancel" : "+ Create Task"}
+              </button>
+            )}
+          </div>
+
+          {showForm && canManage && (
+            <TaskForm
+              project={project}
               user={user}
-              canManage={canManage}
-              onTaskUpdated={handleTaskUpdated}
-              onProgressSaved={handleProgressSaved}
+              onSaved={handleCreated}
+              onCancel={toggleForm}
             />
-          ))}
-        </div>
+          )}
+
+          {notice && (
+            <div className="message-success">{notice}</div>
+          )}
+
+          {message && (
+            <div className="message-error">{message}</div>
+          )}
+
+          {loading ? (
+            <p>Loading tasks...</p>
+          ) : tasks.length === 0 ? (
+            <p>No tasks have been created for this project yet.</p>
+          ) : (
+            <div className="task-list">
+              {tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  user={user}
+                  canManage={canManage}
+                  onTaskUpdated={handleTaskUpdated}
+                  onProgressSaved={handleProgressSaved}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ---------- COSTS ---------- */}
+
+      {activeTab === "costs" && (
+        <ProjectCosts project={project} user={user} />
       )}
 
     </div>
