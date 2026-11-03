@@ -3,6 +3,7 @@ import CreateProject from "./CreateProject";
 import ManageProjects from "./ManageProjects";
 import RoleManagement from "./RoleManagement";
 import Login from "./Login";
+import Dashboard from "./Dashboard";
 import "./App.css";
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
   const handleLogin = (account) => {
     sessionStorage.setItem("user", JSON.stringify(account));
     setUser(account);
+    setPage("dashboard");
   };
 
   const handleLogout = () => {
@@ -53,6 +55,10 @@ function App() {
           <span className="nav-user">
             {user.firstname} {user.lastname} &middot; {user.role}
           </span>
+
+          <button onClick={() => setPage("dashboard")}>
+            Dashboard
+          </button>
 
           <button
             onClick={() => {
@@ -80,6 +86,10 @@ function App() {
       </nav>
 
       <p className="backend-status">{message}</p>
+
+      {page === "dashboard" && (
+        <Dashboard user={user} setPage={setPage} />
+      )}
 
       {page === "manage" && <ManageProjects key={manageKey} user={user} />}
 
