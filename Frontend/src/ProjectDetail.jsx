@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import TaskForm from "./TaskForm";
 import TaskCard from "./TaskCard";
 import ProjectCosts from "./ProjectCosts";
+import ProjectDashboard from "./ProjectDashboard";
+import ProjectOverview from "./ProjectOverview";
 
 // Roles allowed to create, edit, and manage tasks.
 const TASK_MANAGER_ROLES = ["Admin", "PM", "Project Manager", "Supervisor"];
@@ -307,77 +309,35 @@ function ProjectDetail({ project, user, onBack }) {
           Costs
         </button>
 
+        <button
+          type="button"
+          className={
+            activeTab === "dashboard"
+              ? "project-tab active"
+              : "project-tab"
+          }
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+
       </div>
 
       {/* ---------- OVERVIEW TAB ---------- */}
-
       {activeTab === "overview" && (
-        <div className="project-overview-panel">
-
-          <h2>Project Overview</h2>
-
-          <p>
-            Overview of project progress and performance.
-          </p>
-
-          {loading ? (
-            <p>Loading project statistics...</p>
-          ) : (
-            <div className="overview-stats">
-
-              <div className="overview-stat">
-                <span>Total Tasks</span>
-                <strong>{totalTasks}</strong>
-              </div>
-
-              <div className="overview-stat">
-                <span>Completed Tasks</span>
-                <strong>{completedTasks}</strong>
-              </div>
-
-              <div className="overview-stat">
-                <span>In Progress Tasks</span>
-                <strong>{inProgressTasks}</strong>
-              </div>
-
-              <div className="overview-stat">
-                <span>On Hold Tasks</span>
-                <strong>{onHoldTasks}</strong>
-              </div>
-
-              <div className="overview-stat">
-                <span>Not Started Tasks</span>
-                <strong>{notStartedTasks}</strong>
-              </div>
-
-              <div className="overview-stat">
-                <span>Project Status</span>
-                <strong>{project.status}</strong>
-              </div>
-
-            </div>
-          )}
-
-          {message && (
-            <div className="message-error" role="alert">
-              {message}
-            </div>
-          )}
-
-          {/* ---------- FUTURE VISUALIZATIONS ---------- */}
-
-          <div className="overview-placeholder">
-            <h3>Project Visualizations</h3>
-
-            <p>
-              Future charts and project performance
-              visualizations will appear here.
-            </p>
-          </div>
-
-        </div>
+        loading ? (
+          <p>Loading project overview...</p>
+        ) : (
+          <ProjectOverview
+            project={project}
+            tasks={tasks}
+            user={user}
+            onOpenTasks={() => setActiveTab("tasks")}
+            onOpenCosts={() => setActiveTab("costs")}
+          />
+        )
       )}
-
+    
       {/* ---------- TASKS TAB ---------- */}
 
       {activeTab === "tasks" && (
@@ -662,6 +622,16 @@ function ProjectDetail({ project, user, onBack }) {
         />
       )}
 
+
+      {/* ---------- DASHBOARD TAB ---------- */}
+
+      {activeTab === "dashboard" && (
+        loading ? (
+          <p>Loading dashboard...</p>
+        ) : (
+          <ProjectDashboard tasks={tasks} />
+        )
+      )}
     </div>
   );
 }
