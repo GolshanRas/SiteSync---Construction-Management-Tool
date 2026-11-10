@@ -1857,3 +1857,305 @@ body {
   color: #475569;
   border-color: #94a3b8;
 }
+
+
+/* ========================================
+   TASK SORT AND FILTER
+======================================== */
+
+.task-filter-section {
+  margin: 20px 0;
+}
+
+.task-filter-header,
+.task-filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-filter-header h3,
+.task-filter-panel-header h4 {
+  margin: 0;
+}
+
+.task-filter-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* SORT & FILTER BUTTON */
+
+.task-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.task-filter-button:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* FILTER PANEL */
+
+.task-filter-panel {
+  margin-top: 14px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.task-filter-panel-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.task-filter-panel-header h4 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.task-filter-close {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.task-filter-close:hover {
+  color: #111827;
+}
+
+/* FILTER SECTION LABELS */
+
+.task-filter-label {
+  display: block;
+  margin: 22px 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* SORT METRIC AND DIRECTION */
+
+.task-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.task-filter-fields > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-filter-fields label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.task-filter-fields select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.task-filter-fields select:focus,
+.task-user-search:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* MULTI-SELECT CHECKBOXES */
+
+.task-filter-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  margin-top: 12px;
+}
+
+.task-filter-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.task-filter-checkboxes label:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.task-filter-checkboxes label:has(input:checked) {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+.task-filter-checkboxes input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* ASSIGNED USER SEARCH */
+
+.task-user-search {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  margin-top: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+}
+
+.task-user-search::placeholder {
+  color: #9ca3af;
+}
+
+/* ASSIGNED USER LIST */
+
+.task-user-filter-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.task-user-filter-list label {
+  align-items: center;
+}
+
+.task-user-filter-list label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-user-role {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* RESET AND DONE BUTTONS */
+
+.task-filter-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.task-filter-reset,
+.task-filter-done {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.task-filter-reset {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.task-filter-reset:hover {
+  background: #f3f4f6;
+}
+
+.task-filter-done {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+}
+
+.task-filter-done:hover {
+  background: #1d4ed8;
+}
+
+/* TASK COUNT AND EMPTY STATE */
+
+.task-filter-count {
+  margin: 14px 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.task-filter-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* RESPONSIVE LAYOUT */
+
+@media (max-width: 600px) {
+  .task-filter-panel {
+    padding: 16px;
+  }
+
+  .task-filter-fields,
+  .task-filter-checkboxes {
+    grid-template-columns: 1fr;
+  }
+
+  .task-filter-header {
+    flex-wrap: wrap;
+  }
+
+  .task-filter-actions {
+    flex-wrap: wrap;
+  }
+}
