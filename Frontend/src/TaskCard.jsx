@@ -105,8 +105,18 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
       {task.description && (
         <p className="task-description">{task.description}</p>
       )}
-
+      
       <div className="task-meta">
+        <div className="task-meta-row">
+        <strong>Priority:</strong>
+        <span
+          className={`priority-badge priority-${(
+            task.priority || "Standard"
+          ).toLowerCase().replace(/\s+/g, "-")}`}
+        >
+          {task.priority || "Standard"}
+        </span>
+      </div>
         <div className="task-meta-row">
           <strong>Start Date:</strong>
           <span>{task.start_date || "Not set"}</span>
@@ -142,27 +152,6 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
       </div>
       
 
-      {/* <div className="progress-row">
-        <div
-          className="progress-track"
-          role="progressbar"
-          aria-label={`Progress for ${task.name}`}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={task.progress}
-        >
-          <div
-            className={
-              task.progress === 100
-                ? "progress-fill complete"
-                : "progress-fill"
-            }
-            style={{ width: `${task.progress}%` }}
-          />
-        </div>
-
-        <span className="progress-percent">{task.progress}%</span>
-      </div> */}
 
       {canManage && (
         <form className="progress-form" onSubmit={saveStatus}>

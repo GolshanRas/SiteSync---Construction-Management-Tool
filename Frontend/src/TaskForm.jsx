@@ -11,6 +11,7 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
   const [deadline, setDeadline] = useState(task ? task.deadline : "");
   const [startDate, setStartDate] = useState(task ? task.start_date || "" : "");
   const [status, setStatus] = useState(task ? task.status || "Not Started" : "Not Started");
+  const [priority, setPriority] = useState(task ? task.priority || "Standard" : "Standard");
   // const [progress, setProgress] = useState(task ? String(task.progress) : "0");
   const [selected, setSelected] = useState(
     task
@@ -87,18 +88,6 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
 
     setMessage("");
 
-    // const progressNumber = Number(progress);
-
-    // if (
-    //   isEdit &&
-    //   (progress.trim() === "" ||
-    //     !Number.isInteger(progressNumber) ||
-    //     progressNumber < 0 ||
-    //     progressNumber > 100)
-    // ) {
-    //   setMessage("Progress must be a whole number from 0 to 100.");
-    //   return;
-    // }
 
     const body = {
       name: name,
@@ -106,11 +95,9 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
       deadline: deadline,
       start_date: startDate,
       status: status,
+      priority: priority,
     };
 
-    // if (isEdit) {
-    //   body.progress = progressNumber;
-    // }
 
     // If the list of people couldn't be loaded, leave the assignees alone
     if (canPickPeople) {
@@ -246,6 +233,21 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
           <option value="In Progress">In Progress</option>
           <option value="On Hold">On Hold</option>
           <option value="Completed">Completed</option>
+        </select>
+
+        <label htmlFor={`${idPrefix}-priority`}>
+          Task Priority
+        </label>
+
+        <select
+          id={`${idPrefix}-priority`}
+          value={priority}
+          onChange={handleChange(setPriority)}
+        >
+          <option value="Urgent">Urgent</option>
+          <option value="High Priority">High Priority</option>
+          <option value="Standard">Standard</option>
+          <option value="Low Priority">Low Priority</option>
         </select>
 
         <div className="field-label" id={`${idPrefix}-workers-label`}>

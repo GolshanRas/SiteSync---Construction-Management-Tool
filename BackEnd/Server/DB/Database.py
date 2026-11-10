@@ -84,6 +84,10 @@ class Database:
             query.execute(
                 "ALTER TABLE Task ADD COLUMN status TEXT NOT NULL DEFAULT 'Not Started'"
             )
+        if "priority" not in columns:
+            query.execute(
+                "ALTER TABLE Task ADD COLUMN priority TEXT NOT NULL DEFAULT 'Standard'"
+            )
 
         # Preserve the meaning of existing progress values.
         query.execute("""
@@ -240,7 +244,7 @@ class Database:
 
         return accounts
 
-    def addTask(self, project_id, name, description, deadline, assignee_ids, start_date=None, status="Not Started"):
+    def addTask(self, project_id, name, description, deadline, assignee_ids, start_date=None, status="Not Started", priority="Standard"):
         con = self.getConnection()
 
         try:
@@ -248,10 +252,10 @@ class Database:
 
             query.execute(
                 """
-                INSERT INTO Task (project_id, name, description, deadline, start_date, status   )
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO Task (project_id, name, description, deadline, start_date, status, priority)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (project_id, name, description, deadline, start_date, status)
+                (project_id, name, description, deadline, start_date, status, priority)
             )
 
             task_id = query.lastrowid
@@ -273,7 +277,7 @@ class Database:
         query = con.cursor()
 
         query.execute("""
-            SELECT id, project_id, name, description, deadline, progress, start_date, status
+            SELECT id, project_id, name, description, deadline, progress, start_date, status, priority
             FROM Task
             WHERE project_id = ?
             ORDER BY id
@@ -306,7 +310,8 @@ class Database:
                 "workers": [],
                 "supervisors": [],
                 "start_date": row[6] or "",
-                "status": row[7] or "Not Started"
+                "status": row[7] or "Not Started",
+                "priority": row[8] or "Standard"
             }
 
         for task_id, account_id, firstname, lastname, role in assignment_rows:
@@ -359,7 +364,7 @@ class Database:
 
     def updateTask(self, task_id, fields, assignee_ids=None):
         """Edit a task. `fields` holds only the values to change (name,
-        description, deadline, progress, start_date, status). If `assignee_ids` is given, it
+        description, deadline, progress, start_date, status, priority). If `assignee_ids` is given, it
         replaces the task's assignees. Everything is saved together or not at
         all. Returns False if the task doesn't exist."""
         con = self.getConnection()
@@ -368,7 +373,7 @@ class Database:
             query = con.cursor()
 
             query.execute("""
-                SELECT name, description, deadline, progress, start_date, status
+                SELECT name, description, deadline, progress, start_date, status, priority
                 FROM Task
                 WHERE id = ?
             """, (task_id,))
@@ -380,7 +385,7 @@ class Database:
 
             query.execute("""
                 UPDATE Task
-                SET name = ?, description = ?, deadline = ?, progress = ?, start_date = ?, status = ?
+                SET name = ?, description = ?, deadline = ?, progress = ?, start_date = ?, status = ?, priority = ?
                 WHERE id = ?
             """, (
                 fields.get("name", current[0]),
@@ -389,6 +394,7 @@ class Database:
                 fields.get("progress", current[3]),
                 fields.get("start_date", current[4]),
                 fields.get("status", current[5]),
+                fields.get("priority", current[6]),
                 task_id
             ))
 

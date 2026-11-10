@@ -1793,3 +1793,34 @@ body {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+
+
+/* Task Priority Badges */
+
+.priority-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.priority-urgent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.priority-high-priority {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.priority-standard {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.priority-low-priority {
+  background: #f1f5f9;
+  color: #475569;
+}

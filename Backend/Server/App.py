@@ -48,6 +48,13 @@ TASK_STATUSES = {
     "Completed"
 }
 
+TASK_PRIORITIES = {
+    "Urgent",
+    "High Priority",
+    "Standard",
+    "Low Priority"
+}
+
 def parse_progress(value):
     """Return value as a whole number from 0 to 100, or None if it isn't one."""
     if isinstance(value, bool):
@@ -329,12 +336,16 @@ def create_task(project_id):
     assignee_ids = parse_id_list(data.get("assignee_ids"))
     start_date = str(data.get("start_date") or "").strip()
     status = str(data.get("status") or "Not Started").strip()
+    priority = str(data.get("priority") or "Standard").strip()
 
     if start_date and not is_valid_date(start_date):
         return jsonify({"message": "Invalid start date."}), 400
 
     if status not in TASK_STATUSES:
         return jsonify({"message": "Invalid task status."}), 400
+
+    if priority not in TASK_PRIORITIES:
+        return jsonify({"message": "Invalid task priority."}), 400
 
     if start_date and deadline and start_date > deadline:
         return jsonify({
@@ -362,6 +373,8 @@ def create_task(project_id):
             "message": "Tasks can only be assigned to workers and supervisors."
         }), 400
 
+
+
     task_id = db.addTask(
         project_id,
         name,
@@ -369,7 +382,8 @@ def create_task(project_id):
         deadline or None,
         assignee_ids,
         start_date or None,
-        status
+        status,
+        priority
     )
 
     return jsonify(db.getTask(task_id)), 201
@@ -444,6 +458,14 @@ def update_task(task_id):
             return jsonify({"message": "Invalid task status."}), 400
 
         fields["status"] = status
+
+    if "priority" in data:
+        priority = str(data["priority"] or "").strip()
+
+        if priority not in TASK_PRIORITIES:
+            return jsonify({"message": "Invalid priority."}), 400
+
+        fields["priority"] = priority
     
     if "progress" in data:
         progress = parse_progress(data["progress"])
