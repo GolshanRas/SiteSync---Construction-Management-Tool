@@ -15,7 +15,7 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
   // const [progress, setProgress] = useState(task ? String(task.progress) : "0");
   const [selected, setSelected] = useState(
     task
-      ? [...task.workers, ...task.supervisors].map((person) => person.id)
+      ? [...(task.workers || []), ...(task.supervisors || []), ...(task.project_managers || [])].map((person) => person.id)
       : []
   );
   const [people, setPeople] = useState([]);
@@ -66,6 +66,7 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
 
   const workers = people.filter((person) => person.role === "Worker");
   const supervisors = people.filter((person) => person.role === "Supervisor");
+  const projectManagers = people.filter((person) => person.role === "Project Manager");
   const canPickPeople = peopleLoaded && !peopleError;
 
   // Editing any field clears an old error message
@@ -266,6 +267,15 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
           supervisors,
           `${idPrefix}-supervisors-label`,
           "There are no supervisor accounts yet. An admin can give someone the Supervisor role under Role Management."
+        )}
+
+        <div className="field-label" id={`${idPrefix}-project-managers-label`}>
+          Assign Project Managers
+        </div>
+        {renderPeople(
+          projectManagers,
+          `${idPrefix}-project-managers-label`,
+          "There are no project manager accounts yet. An admin can give someone the Project Manager role under Role Management."
         )}
 
         {message && (

@@ -235,7 +235,7 @@ class Database:
         query.execute("""
             SELECT id, firstname, lastname, role
             FROM Account
-            WHERE role IN ('Worker', 'Supervisor')
+            WHERE role IN ('Worker', 'Supervisor', 'Project Manager')
             ORDER BY lastname COLLATE NOCASE, firstname COLLATE NOCASE
         """)
 
@@ -309,6 +309,7 @@ class Database:
                 "progress": row[5],
                 "workers": [],
                 "supervisors": [],
+                "project_managers": [],
                 "start_date": row[6] or "",
                 "status": row[7] or "Not Started",
                 "priority": row[8] or "Standard"
@@ -323,7 +324,9 @@ class Database:
 
             if role == "Supervisor":
                 tasks[task_id]["supervisors"].append(person)
-            else:
+            elif role == "Project Manager":
+                tasks[task_id]["project_managers"].append(person)
+            elif role == "Worker":
                 tasks[task_id]["workers"].append(person)
 
         return list(tasks.values())

@@ -370,7 +370,7 @@ def create_task(project_id):
 
     if any(account_id not in assignable for account_id in assignee_ids):
         return jsonify({
-            "message": "Tasks can only be assigned to workers and supervisors."
+            "message": "Tasks can only be assigned to workers, supervisors, and project managers."
         }), 400
 
 

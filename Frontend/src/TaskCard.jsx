@@ -91,15 +91,25 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
       <div className="task-card-top">
         <h3>{task.name}</h3>
 
-        {canManage && (
-          <button
-            type="button"
-            className="edit-button"
-            onClick={() => setEditing(true)}
+        <div className="task-actions">
+          <span
+            className={`priority-badge priority-${(task.priority || "Standard")
+              .toLowerCase()
+              .replace(/\s+/g, "-")}`}
           >
-            Edit
-          </button>
-        )}
+            {task.priority || "Standard"}
+          </span>
+
+          {canManage && (
+            <button
+              type="button"
+              className="edit-button"
+              onClick={() => setEditing(true)}
+            >
+              Edit
+            </button>
+          )}
+        </div>
       </div>
 
       {task.description && (
@@ -107,16 +117,6 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
       )}
       
       <div className="task-meta">
-        <div className="task-meta-row">
-        <strong>Priority:</strong>
-        <span
-          className={`priority-badge priority-${(
-            task.priority || "Standard"
-          ).toLowerCase().replace(/\s+/g, "-")}`}
-        >
-          {task.priority || "Standard"}
-        </span>
-      </div>
         <div className="task-meta-row">
           <strong>Start Date:</strong>
           <span>{task.start_date || "Not set"}</span>
@@ -129,15 +129,18 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
             <span className="task-none">Not set</span>
           )}
         </div>
-
+        <div className="task-meta-row">
+          <strong>Project Manager:</strong>
+          {renderPeople(task.project_managers || [])}
+        </div>
         <div className="task-meta-row">
           <strong>Workers:</strong>
-          {renderPeople(task.workers)}
+          {renderPeople(task.workers || [])}
         </div>
 
         <div className="task-meta-row">
           <strong>Supervisors:</strong>
-          {renderPeople(task.supervisors)}
+          {renderPeople(task.supervisors || [])}
         </div>
         <div className="task-meta-row">
           <strong>Status:</strong>
