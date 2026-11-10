@@ -1076,7 +1076,7 @@ body {
 }
 
 
-/* ---------- TASK PROGRESS ---------- */
+/* ---------- TASK PROGRESS ----------
 
 .progress-row {
   display: flex;
@@ -1177,7 +1177,44 @@ body {
 
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
+ */
+/* ---------- TASK STATUS UPDATE ---------- */
 
+.progress-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.progress-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.progress-input {
+  display: flex;
+  align-items: center;
+}
+
+.progress-input select {
+  min-width: 160px;
+  height: 38px;
+  padding: 8px 12px;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
 .progress-form button {
   padding: 8px 16px;
 
@@ -1201,7 +1238,7 @@ body {
 }
 
 .progress-form button:disabled {
-  opacity: 0.5;
+  opacity: 0.5; 
 
   cursor: not-allowed;
 }
@@ -1594,4 +1631,165 @@ body {
     text-align: center;
     padding: 10px;
   }
+}
+
+
+/* ===== DASHBOARD FIX FOR ORIGINAL JSX ===== */
+
+/* Dashboard KPI cards */
+.page > div[style*="grid"] > .project-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  min-width: 0;
+}
+
+/* KPI headings */
+.page > div[style*="grid"] > .project-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 12px;
+}
+
+/* KPI numbers */
+.page > div[style*="grid"] > .project-card > p {
+  color: #172033;
+  line-height: 1.3;
+}
+
+/* KPI buttons */
+.page > div[style*="grid"] > .project-card button {
+  background: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: auto;
+}
+
+.page > div[style*="grid"] > .project-card button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Manager Actions */
+.page > div[style*="margin-top"] > div[style*="background"] {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 24px !important;
+  margin-bottom: 24px;
+}
+
+.page > div[style*="margin-top"] > div[style*="background"] h3 {
+  margin-top: 0;
+  color: #172033;
+}
+
+/* Manager Actions button */
+.page > div[style*="margin-top"] > div[style*="background"] button {
+  background: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.page > div[style*="margin-top"] > div[style*="background"] button:hover {
+  background: #1d4ed8;
+}
+
+/* Recent project cards */
+.page > div[style*="margin-top"] .project-list .project-card {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.page > div[style*="margin-top"] .project-list .project-card h4 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.page > div[style*="margin-top"] .project-list .project-card p {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+/* Mobile */
+@media (max-width: 650px) {
+  .page > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ---------- TASK STATUS LABELS ---------- */
+
+.task-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-not-started {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status-in-progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-on-hold {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Status dropdown */
+
+.progress-form select,
+.project-form select {
+  padding: 10px 12px;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.progress-form select:focus,
+.project-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }

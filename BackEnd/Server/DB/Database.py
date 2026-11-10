@@ -73,7 +73,28 @@ class Database:
                     REFERENCES Project(id) ON DELETE CASCADE
             )
         """)
+        # Add new fields to existing Task table without deleting data.
+        query.execute("PRAGMA table_info(Task)")
+        columns = {row[1] for row in query.fetchall()}
 
+        if "start_date" not in columns:
+            query.execute("ALTER TABLE Task ADD COLUMN start_date TEXT")
+
+        if "status" not in columns:
+            query.execute(
+                "ALTER TABLE Task ADD COLUMN status TEXT NOT NULL DEFAULT 'Not Started'"
+            )
+
+        # Preserve the meaning of existing progress values.
+        query.execute("""
+            UPDATE Task
+            SET status = CASE
+                WHEN progress >= 100 THEN 'Completed'
+                WHEN progress > 0 THEN 'In Progress'
+                ELSE 'Not Started'
+            END
+            WHERE status = 'Not Started'
+        """)
         con.commit()
         con.close()
 
@@ -219,7 +240,7 @@ class Database:
 
         return accounts
 
-    def addTask(self, project_id, name, description, deadline, assignee_ids):
+    def addTask(self, project_id, name, description, deadline, assignee_ids, start_date=None, status="Not Started"):
         con = self.getConnection()
 
         try:
@@ -227,10 +248,10 @@ class Database:
 
             query.execute(
                 """
-                INSERT INTO Task (project_id, name, description, deadline)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO Task (project_id, name, description, deadline, start_date, status   )
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (project_id, name, description, deadline)
+                (project_id, name, description, deadline, start_date, status)
             )
 
             task_id = query.lastrowid
@@ -252,7 +273,7 @@ class Database:
         query = con.cursor()
 
         query.execute("""
-            SELECT id, project_id, name, description, deadline, progress
+            SELECT id, project_id, name, description, deadline, progress, start_date, status
             FROM Task
             WHERE project_id = ?
             ORDER BY id
@@ -283,7 +304,9 @@ class Database:
                 "deadline": row[4] or "",
                 "progress": row[5],
                 "workers": [],
-                "supervisors": []
+                "supervisors": [],
+                "start_date": row[6] or "",
+                "status": row[7] or "Not Started"
             }
 
         for task_id, account_id, firstname, lastname, role in assignment_rows:
@@ -336,7 +359,7 @@ class Database:
 
     def updateTask(self, task_id, fields, assignee_ids=None):
         """Edit a task. `fields` holds only the values to change (name,
-        description, deadline, progress). If `assignee_ids` is given, it
+        description, deadline, progress, start_date, status). If `assignee_ids` is given, it
         replaces the task's assignees. Everything is saved together or not at
         all. Returns False if the task doesn't exist."""
         con = self.getConnection()
@@ -345,7 +368,7 @@ class Database:
             query = con.cursor()
 
             query.execute("""
-                SELECT name, description, deadline, progress
+                SELECT name, description, deadline, progress, start_date, status
                 FROM Task
                 WHERE id = ?
             """, (task_id,))
@@ -357,13 +380,15 @@ class Database:
 
             query.execute("""
                 UPDATE Task
-                SET name = ?, description = ?, deadline = ?, progress = ?
+                SET name = ?, description = ?, deadline = ?, progress = ?, start_date = ?, status = ?
                 WHERE id = ?
             """, (
                 fields.get("name", current[0]),
                 fields.get("description", current[1]),
                 fields.get("deadline", current[2]),
                 fields.get("progress", current[3]),
+                fields.get("start_date", current[4]),
+                fields.get("status", current[5]),
                 task_id
             ))
 

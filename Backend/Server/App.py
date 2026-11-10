@@ -41,6 +41,13 @@ def require_permission(permission: PermissionForTasks):
         return wrapper
     return decorator
 
+TASK_STATUSES = {
+    "Not Started",
+    "In Progress",
+    "On Hold",
+    "Completed"
+}
+
 def parse_progress(value):
     """Return value as a whole number from 0 to 100, or None if it isn't one."""
     if isinstance(value, bool):
@@ -320,7 +327,20 @@ def create_task(project_id):
     description = str(data.get("description") or "").strip()
     deadline = str(data.get("deadline") or "").strip()
     assignee_ids = parse_id_list(data.get("assignee_ids"))
+    start_date = str(data.get("start_date") or "").strip()
+    status = str(data.get("status") or "Not Started").strip()
 
+    if start_date and not is_valid_date(start_date):
+        return jsonify({"message": "Invalid start date."}), 400
+
+    if status not in TASK_STATUSES:
+        return jsonify({"message": "Invalid task status."}), 400
+
+    if start_date and deadline and start_date > deadline:
+        return jsonify({
+            "message": "Start date cannot be after deadline."
+        }), 400
+    
     if not db.projectExists(project_id):
         return jsonify({"message": "Project not found."}), 404
 
@@ -347,7 +367,9 @@ def create_task(project_id):
         name,
         description,
         deadline or None,
-        assignee_ids
+        assignee_ids,
+        start_date or None,
+        status
     )
 
     return jsonify(db.getTask(task_id)), 201
@@ -407,7 +429,22 @@ def update_task(task_id):
             return jsonify({"message": "Deadline must be a valid date."}), 400
 
         fields["deadline"] = deadline or None
+    if "start_date" in data:
+        start_date = str(data["start_date"] or "").strip()
 
+        if start_date and not is_valid_date(start_date):
+            return jsonify({"message": "Invalid start date."}), 400
+
+        fields["start_date"] = start_date or None
+
+    if "status" in data:
+        status = str(data["status"] or "").strip()
+
+        if status not in TASK_STATUSES:
+            return jsonify({"message": "Invalid task status."}), 400
+
+        fields["status"] = status
+    
     if "progress" in data:
         progress = parse_progress(data["progress"])
 
@@ -433,6 +470,20 @@ def update_task(task_id):
             return jsonify({
                 "message": "Tasks can only be assigned to workers and supervisors."
             }), 400
+
+    #validates the dates
+    current_task = db.getTask(task_id)
+
+    if current_task is None:
+        return jsonify({"message": "Task not found."}), 404
+
+    final_start = fields.get("start_date", current_task.get("start_date"))
+    final_deadline = fields.get("deadline", current_task.get("deadline"))
+
+    if final_start and final_deadline and final_start > final_deadline:
+        return jsonify({
+            "message": "Start date cannot be after deadline."
+        }), 400
 
     if not fields and assignee_ids is None:
         return jsonify({"message": "Nothing to update."}), 400

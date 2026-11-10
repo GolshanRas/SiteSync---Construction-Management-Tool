@@ -1,11 +1,11 @@
+
 import { useEffect, useState } from "react";
 import TaskForm from "./TaskForm";
 import TaskCard from "./TaskCard";
 import ProjectCosts from "./ProjectCosts";
 
-// Roles allowed to create tasks, assign people and update progress.
-// (The server checks this too; this only decides what to show.)
-const TASK_MANAGER_ROLES = ["Admin", "Project Manager", "Supervisor"];
+// Roles allowed to create, edit, and manage tasks.
+const TASK_MANAGER_ROLES = ["Admin", "PM", "Project Manager", "Supervisor"];
 
 function ProjectDetail({ project, user, onBack }) {
   const [tasks, setTasks] = useState([]);
@@ -17,8 +17,17 @@ function ProjectDetail({ project, user, onBack }) {
 
   const canManage = TASK_MANAGER_ROLES.includes(user.role);
 
+  // ---------- FETCH PROJECT TASKS ----------
+
   useEffect(() => {
     let ignore = false;
+
+    setLoading(true);
+    setMessage("");
+    setTasks([]);
+    setNotice("");
+    setShowForm(false);
+    setActiveTab("overview");
 
     fetch(`http://localhost:5000/api/projects/${project.id}/tasks`, {
       headers: {
@@ -26,7 +35,10 @@ function ProjectDetail({ project, user, onBack }) {
       },
     })
       .then((response) =>
-        response.json().then((data) => ({ ok: response.ok, data }))
+        response.json().then((data) => ({
+          ok: response.ok,
+          data,
+        }))
       )
       .then(({ ok, data }) => {
         if (ignore) return;
@@ -53,6 +65,8 @@ function ProjectDetail({ project, user, onBack }) {
     };
   }, [project.id, user.role]);
 
+  // ---------- TASK MANAGEMENT ----------
+
   const toggleForm = () => {
     setNotice("");
     setShowForm((open) => !open);
@@ -66,45 +80,59 @@ function ProjectDetail({ project, user, onBack }) {
 
   const handleTaskUpdated = (updatedTask) => {
     setTasks((current) =>
-      current.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+      current.map((task) =>
+        task.id === updatedTask.id ? updatedTask : task
+      )
     );
+
     setNotice("Task updated successfully!");
   };
 
-  const handleProgressSaved = (taskId, progress) => {
-    setTasks((current) =>
-      current.map((task) =>
-        task.id === taskId ? { ...task, progress: progress } : task
-      )
-    );
-  };
+  // ---------- TASK STATISTICS ----------
+
   const totalTasks = tasks.length;
 
   const completedTasks = tasks.filter(
-    (task) => Number(task.progress || 0) >= 100
+    (task) => task.status === "Completed"
   ).length;
 
-  const averageProgress =
-    totalTasks === 0
-      ? 0
-      : Math.round(
-          tasks.reduce(
-            (total, task) => total + Number(task.progress || 0),
-            0
-          ) / totalTasks
-        );
+  const inProgressTasks = tasks.filter(
+    (task) => task.status === "In Progress"
+  ).length;
+
+  const onHoldTasks = tasks.filter(
+    (task) => task.status === "On Hold"
+  ).length;
+
+  const notStartedTasks = tasks.filter(
+    (task) => !task.status || task.status === "Not Started"
+  ).length;
+
+  // ---------- RENDER ----------
+
   return (
     <div className="page">
 
-      <button type="button" className="back-link" onClick={onBack}>
+      {/* ---------- BACK BUTTON ---------- */}
+
+      <button
+        type="button"
+        className="back-link"
+        onClick={onBack}
+      >
         &larr; Back to projects
       </button>
+
+      {/* ---------- PROJECT SUMMARY ---------- */}
 
       <section className="project-summary">
 
         <div className="project-summary-top">
           <h1>{project.name}</h1>
-          <span className="role-badge">{project.status}</span>
+
+          <span className="role-badge">
+            {project.status}
+          </span>
         </div>
 
         {project.description && (
@@ -114,6 +142,7 @@ function ProjectDetail({ project, user, onBack }) {
         )}
 
         <dl className="project-facts">
+
           <div>
             <dt>Location</dt>
             <dd>{project.location || "Not set"}</dd>
@@ -128,13 +157,14 @@ function ProjectDetail({ project, user, onBack }) {
             <dt>End Date</dt>
             <dd>{project.end_date || "Not set"}</dd>
           </div>
-        </dl>
 
+        </dl>
       </section>
-        
+
       {/* ---------- PROJECT TABS ---------- */}
 
       <div className="project-tabs">
+
         <button
           type="button"
           className={
@@ -170,19 +200,25 @@ function ProjectDetail({ project, user, onBack }) {
         >
           Costs
         </button>
+
       </div>
 
-      {/* ---------- OVERVIEW ---------- */}
+      {/* ---------- OVERVIEW TAB ---------- */}
 
       {activeTab === "overview" && (
         <div className="project-overview-panel">
+
           <h2>Project Overview</h2>
-          <p>Overview of project progress and performance.</p>
+
+          <p>
+            Overview of project progress and performance.
+          </p>
 
           {loading ? (
             <p>Loading project statistics...</p>
           ) : (
             <div className="overview-stats">
+
               <div className="overview-stat">
                 <span>Total Tasks</span>
                 <strong>{totalTasks}</strong>
@@ -194,36 +230,55 @@ function ProjectDetail({ project, user, onBack }) {
               </div>
 
               <div className="overview-stat">
-                <span>Average Task Progress</span>
-                <strong>{averageProgress}%</strong>
+                <span>In Progress Tasks</span>
+                <strong>{inProgressTasks}</strong>
+              </div>
+
+              <div className="overview-stat">
+                <span>On Hold Tasks</span>
+                <strong>{onHoldTasks}</strong>
+              </div>
+
+              <div className="overview-stat">
+                <span>Not Started Tasks</span>
+                <strong>{notStartedTasks}</strong>
               </div>
 
               <div className="overview-stat">
                 <span>Project Status</span>
                 <strong>{project.status}</strong>
               </div>
+
             </div>
           )}
 
           {message && (
-            <div className="message-error">{message}</div>
+            <div className="message-error" role="alert">
+              {message}
+            </div>
           )}
+
+          {/* ---------- FUTURE VISUALIZATIONS ---------- */}
 
           <div className="overview-placeholder">
             <h3>Project Visualizations</h3>
+
             <p>
               Future charts and project performance
               visualizations will appear here.
             </p>
           </div>
+
         </div>
       )}
 
-      {/* ---------- TASKS ---------- */}
+      {/* ---------- TASKS TAB ---------- */}
 
       {activeTab === "tasks" && (
         <>
+
           <div className="section-header">
+
             <h2>Tasks</h2>
 
             {canManage && (
@@ -239,7 +294,10 @@ function ProjectDetail({ project, user, onBack }) {
                 {showForm ? "Cancel" : "+ Create Task"}
               </button>
             )}
+
           </div>
+
+          {/* ---------- CREATE TASK ---------- */}
 
           {showForm && canManage && (
             <TaskForm
@@ -250,20 +308,31 @@ function ProjectDetail({ project, user, onBack }) {
             />
           )}
 
+          {/* ---------- NOTIFICATIONS ---------- */}
+
           {notice && (
-            <div className="message-success">{notice}</div>
+            <div className="message-success">
+              {notice}
+            </div>
           )}
 
           {message && (
-            <div className="message-error">{message}</div>
+            <div className="message-error" role="alert">
+              {message}
+            </div>
           )}
+
+          {/* ---------- TASK LIST ---------- */}
 
           {loading ? (
             <p>Loading tasks...</p>
           ) : tasks.length === 0 ? (
-            <p>No tasks have been created for this project yet.</p>
+            <p>
+              No tasks have been created for this project yet.
+            </p>
           ) : (
             <div className="task-list">
+
               {tasks.map((task) => (
                 <TaskCard
                   key={task.id}
@@ -271,18 +340,22 @@ function ProjectDetail({ project, user, onBack }) {
                   user={user}
                   canManage={canManage}
                   onTaskUpdated={handleTaskUpdated}
-                  onProgressSaved={handleProgressSaved}
                 />
               ))}
+
             </div>
           )}
+
         </>
       )}
 
-      {/* ---------- COSTS ---------- */}
+      {/* ---------- COSTS TAB ---------- */}
 
       {activeTab === "costs" && (
-        <ProjectCosts project={project} user={user} />
+        <ProjectCosts
+          project={project}
+          user={user}
+        />
       )}
 
     </div>

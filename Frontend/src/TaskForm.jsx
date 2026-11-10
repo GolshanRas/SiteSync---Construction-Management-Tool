@@ -9,7 +9,9 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
   const [name, setName] = useState(task ? task.name : "");
   const [description, setDescription] = useState(task ? task.description : "");
   const [deadline, setDeadline] = useState(task ? task.deadline : "");
-  const [progress, setProgress] = useState(task ? String(task.progress) : "0");
+  const [startDate, setStartDate] = useState(task ? task.start_date || "" : "");
+  const [status, setStatus] = useState(task ? task.status || "Not Started" : "Not Started");
+  // const [progress, setProgress] = useState(task ? String(task.progress) : "0");
   const [selected, setSelected] = useState(
     task
       ? [...task.workers, ...task.supervisors].map((person) => person.id)
@@ -85,28 +87,30 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
 
     setMessage("");
 
-    const progressNumber = Number(progress);
+    // const progressNumber = Number(progress);
 
-    if (
-      isEdit &&
-      (progress.trim() === "" ||
-        !Number.isInteger(progressNumber) ||
-        progressNumber < 0 ||
-        progressNumber > 100)
-    ) {
-      setMessage("Progress must be a whole number from 0 to 100.");
-      return;
-    }
+    // if (
+    //   isEdit &&
+    //   (progress.trim() === "" ||
+    //     !Number.isInteger(progressNumber) ||
+    //     progressNumber < 0 ||
+    //     progressNumber > 100)
+    // ) {
+    //   setMessage("Progress must be a whole number from 0 to 100.");
+    //   return;
+    // }
 
     const body = {
       name: name,
       description: description,
       deadline: deadline,
+      start_date: startDate,
+      status: status,
     };
 
-    if (isEdit) {
-      body.progress = progressNumber;
-    }
+    // if (isEdit) {
+    //   body.progress = progressNumber;
+    // }
 
     // If the list of people couldn't be loaded, leave the assignees alone
     if (canPickPeople) {
@@ -209,7 +213,17 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
           value={description}
           onChange={handleChange(setDescription)}
         />
+        <label htmlFor={`${idPrefix}-start-date`}>
+          Start Date
+        </label>
 
+        <input
+          id={`${idPrefix}-start-date`}
+          type="date"
+          value={startDate}
+          max={deadline || undefined}
+          onChange={handleChange(setStartDate)}
+        />
         <label htmlFor={`${idPrefix}-deadline`}>Deadline</label>
         <input
           id={`${idPrefix}-deadline`}
@@ -218,21 +232,21 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
           onChange={handleChange(setDeadline)}
         />
 
-        {isEdit && (
-          <>
-            <label htmlFor={`${idPrefix}-progress`}>Progress (%)</label>
-            <input
-              id={`${idPrefix}-progress`}
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              value={progress}
-              onChange={handleChange(setProgress)}
-              required
-            />
-          </>
-        )}
+
+        <label htmlFor={`${idPrefix}-status`}>
+          Task Status
+        </label>
+
+        <select
+          id={`${idPrefix}-status`}
+          value={status}
+          onChange={handleChange(setStatus)}
+        >
+          <option value="Not Started">Not Started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="On Hold">On Hold</option>
+          <option value="Completed">Completed</option>
+        </select>
 
         <div className="field-label" id={`${idPrefix}-workers-label`}>
           Assign Workers
