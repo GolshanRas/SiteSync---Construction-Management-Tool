@@ -10,6 +10,8 @@ class PermissionForTasks(StrEnum):
     MANAGE_PROJECT = "manageP" # create, edit, assign and delete projects
     MANAGE_TASKS = "manageT"  # create, edit, assign and delete tasks
     MANAGE_ACCOUNTS = "manageA" # create, edit and delete accounts, give them roles
+    SEND_REQUEST = "request" # send requests in a project
+    MANAGE_REQUESTS = "manageR" # manage requests
     VIEW_PROJECT = "view" #project and tasks
     UPDATE_STATUS = "update"
     ANALYSIS = "analysis"
@@ -23,17 +25,22 @@ ROLE_PERMISSIONS: dict[Roles, set[PermissionForTasks]] = {
         PermissionForTasks.MANAGE_PROJECT,
         PermissionForTasks.MANAGE_TASKS,
         PermissionForTasks.VIEW_PROJECT,
+        PermissionForTasks.SEND_REQUEST,
+        PermissionForTasks.MANAGE_REQUESTS,
         PermissionForTasks.CONTACT
     },
     Roles.WORKER: {
         PermissionForTasks.VIEW_PROJECT,
         PermissionForTasks.UPDATE_STATUS,
+        PermissionForTasks.SEND_REQUEST,
         PermissionForTasks.CONTACT
     },
     Roles.SUPERVISOR: {
         PermissionForTasks.MANAGE_TASKS,
         PermissionForTasks.MANAGE_PROJECT,
         PermissionForTasks.VIEW_PROJECT,
+        PermissionForTasks.SEND_REQUEST,
+        PermissionForTasks.MANAGE_REQUESTS,
         PermissionForTasks.UPDATE_STATUS,
         PermissionForTasks.CONTACT
     },
@@ -41,6 +48,8 @@ ROLE_PERMISSIONS: dict[Roles, set[PermissionForTasks]] = {
         PermissionForTasks.MANAGE_TASKS,
         PermissionForTasks.MANAGE_PROJECT,
         PermissionForTasks.VIEW_PROJECT,
+        PermissionForTasks.SEND_REQUEST,
+        PermissionForTasks.MANAGE_REQUESTS,
         PermissionForTasks.UPDATE_STATUS,
         PermissionForTasks.CONTACT,
         PermissionForTasks.ANALYSIS

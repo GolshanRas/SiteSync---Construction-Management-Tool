@@ -4,11 +4,12 @@ import ManageProjects from "./ManageProjects";
 import RoleManagement from "./RoleManagement";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
+import Requests from "./Requests";
 import "./App.css";
 
 function App() {
   const [message, setMessage] = useState("Connecting...");
-  const [page, setPage] = useState("");
+  const [page, setPage] = useState("dashboard");
   const [manageKey, setManageKey] = useState(0);
   const [user, setUser] = useState(() => {
     try {
@@ -60,6 +61,10 @@ function App() {
             Dashboard
           </button>
 
+          <button onClick={() => setPage("requests")}>
+            Requests
+          </button>
+
           <button
             onClick={() => {
               setPage("manage");
@@ -90,6 +95,8 @@ function App() {
       {page === "dashboard" && (
         <Dashboard user={user} setPage={setPage} />
       )}
+
+      {page === "requests" && <Requests user={user} />}
 
       {page === "manage" && <ManageProjects key={manageKey} user={user} />}
 

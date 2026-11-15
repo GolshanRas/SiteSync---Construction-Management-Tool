@@ -139,7 +139,8 @@ body {
 }
 
 .project-form input,
-.project-form textarea {
+.project-form textarea,
+.project-form select {
   width: 100%;
 
   padding: 11px 12px;
@@ -159,7 +160,8 @@ body {
 }
 
 .project-form input:focus,
-.project-form textarea:focus {
+.project-form textarea:focus,
+.project-form select:focus {
   border-color: #3b82f6;
 
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -258,6 +260,34 @@ body {
 
 .project-list + p {
   color: #6b7280;
+}
+
+.requests-section {
+  margin-top: 32px;
+}
+
+.requests-section > h2 {
+  margin-bottom: 16px;
+}
+
+.request-heading,
+.request-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.request-heading {
+  justify-content: space-between;
+}
+
+.request-heading h3 {
+  margin: 0;
+}
+
+.request-actions {
+  margin-top: 16px;
 }
 
 

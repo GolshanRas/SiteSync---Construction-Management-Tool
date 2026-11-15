@@ -140,10 +140,13 @@ function Dashboard({ user, setPage }) {
 
         {/* Requests & Issues Widget */}
         <div className="project-card">
-          <h3>Material / Issue Requests</h3>
+          <h3>Project Requests</h3>
           <p style={{ fontSize: "0.95rem", color: "#666", marginTop: "0.5rem" }}>
-            <em>No open requests</em>
+            Submit a request or review project requests.
           </p>
+          <button type="button" onClick={() => setPage("requests")}>
+            Open Requests
+          </button>
         </div>
       </div>
 

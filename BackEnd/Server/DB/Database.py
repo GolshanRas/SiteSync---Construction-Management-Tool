@@ -41,6 +41,21 @@ class Database:
         """)
 
         query.execute("""
+            CREATE TABLE IF NOT EXISTS Request (
+                request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                requester_id INTEGER NOT NULL,
+                request_date TEXT NOT NULL,
+                description TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'Pending',
+                FOREIGN KEY (project_id)
+                    REFERENCES Project(id) ON DELETE CASCADE,
+                FOREIGN KEY (requester_id)
+                    REFERENCES Account(id) ON DELETE CASCADE
+            )
+        """)
+
+        query.execute("""
             CREATE TABLE IF NOT EXISTS ProjectExpense (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 project_id INTEGER NOT NULL,
@@ -99,6 +114,7 @@ class Database:
             END
             WHERE status = 'Not Started'
         """)
+
         con.commit()
         con.close()
 
@@ -625,5 +641,74 @@ class Database:
                     """, (project_id, category, amount))
 
             return True
+        finally:
+            con.close()
+
+    def addRequest(self, project_id, requester_id, request_date, description):
+        con = self.getConnection()
+        try:
+            with con:
+                cursor = con.execute("""
+                    INSERT INTO Request
+                        (project_id, requester_id, request_date, description)
+                    VALUES (?, ?, ?, ?)
+                """, (project_id, requester_id, request_date, description))
+            return cursor.lastrowid
+        except sqlite3.IntegrityError:
+            return 0
+        finally:
+            con.close()
+
+    def getRequests(self, project_id):
+        con = self.getConnection()
+        try:
+            rows = con.execute("""
+                SELECT r.request_id, r.project_id, r.requester_id, r.request_date,
+                       r.description, r.status,
+                       a.firstname, a.lastname
+                FROM Request r
+                JOIN Account a ON a.id = r.requester_id
+                WHERE r.project_id = ?
+                ORDER BY r.request_date DESC
+            """, (project_id,)).fetchall()
+
+            return [
+                {
+                    "request_id": row[0],
+                    "project_id": row[1],
+                    "requester_id": row[2],
+                    "request_date": row[3],
+                    "description": row[4],
+                    "status": row[5],
+                    "requester_firstname": row[6],
+                    "requester_lastname": row[7]
+                }
+                for row in rows
+            ]
+        finally:
+            con.close()
+
+    def updateRequestStatus(self, request_id, new_status):
+        con = self.getConnection()
+        try:
+            with con:
+                result = con.execute("""
+                    UPDATE Request
+                    SET status = ?
+                    WHERE request_id = ?
+                """, (new_status, request_id))
+            return result.rowcount > 0
+        finally:
+            con.close()
+
+    def deleteRequest(self, request_id):
+        con = self.getConnection()
+        try:
+            with con:
+                result = con.execute("""
+                    DELETE FROM Request
+                    WHERE request_id = ?
+                """, (request_id,))
+            return result.rowcount > 0
         finally:
             con.close()

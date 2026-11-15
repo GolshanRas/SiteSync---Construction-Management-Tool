@@ -312,6 +312,67 @@ def get_assignees():
 
     return jsonify(people)
 
+@app.route("/api/requests", methods=["GET"])
+@require_permission(PermissionForTasks.SEND_REQUEST)
+def get_requests():
+    project_id = request.args.get("project_id")
+
+    if not project_id:
+        return jsonify({"message": "Project ID is required."}), 400
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    return jsonify(db.getRequests(project_id))
+
+@app.route("/api/requests/<int:request_id>/status", methods=["PUT"])
+@require_permission(PermissionForTasks.MANAGE_REQUESTS)
+def update_request_status(request_id):
+    data = request.get_json()
+
+    new_status = data.get("new_status")
+
+    if new_status not in ["Approved", "Denied"]:
+        return jsonify({"message": "Invalid status."}), 400
+
+    if not db.updateRequestStatus(request_id, new_status):
+        return jsonify({"message": "Request not found."}), 404
+
+    return jsonify({"message": "Request status updated successfully!"})
+
+@app.route("/api/requests", methods=["POST"])
+@require_permission(PermissionForTasks.SEND_REQUEST)
+def add_request():
+    data = request.get_json()
+
+    project_id = data.get("project_id")
+    description = str(data.get("description") or "").strip()
+    date = data.get("request_date")
+    requester = data.get("requester_id")
+
+    if not project_id or not description or not date or not requester:
+        return jsonify({"message": "Project ID and description are required."}), 400
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found."}), 404
+
+    request_id = db.addRequest(project_id, requester, date, description)
+
+    if request_id != 0:
+        return jsonify({
+            "message": "Request added successfully!",
+            "request_id": request_id
+        }), 201
+    else:
+        return jsonify({"message": "Request could not be created."}), 409
+
+@app.route("/api/requests/<int:request_id>", methods=["DELETE"])
+@require_permission(PermissionForTasks.MANAGE_REQUESTS)
+def delete_request(request_id):
+    if not db.deleteRequest(request_id):
+        return jsonify({"message": "Request not found."}), 404
+
+    return jsonify({"message": "Request deleted successfully!"})
 
 @app.route("/api/projects/<int:project_id>/tasks", methods=["GET"])
 @require_permission(PermissionForTasks.VIEW_PROJECT)
