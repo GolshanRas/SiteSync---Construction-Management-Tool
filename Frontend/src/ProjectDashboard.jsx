@@ -62,7 +62,10 @@ function ProjectDashboard({ tasks }) {
     ? new Date(Math.max(...scheduledTasks.map((t) => t.end.getTime())))
     : today;
 
-  const unitDays = view === "week" ? 7 : 1;
+  const unitDays =
+    view === "month" ? 30 :
+    view === "biweekly" ? 14 :
+    view === "week" ? 7 : 1;
 
   const timelineStart = new Date(earliest);
   timelineStart.setDate(
@@ -78,7 +81,10 @@ function ProjectDashboard({ tasks }) {
     Math.ceil(totalDays / unitDays)
   );
 
-  const columnWidth = view === "week" ? 110 : 45;
+  const columnWidth =
+    view === "month" ? 55 : 
+    view === "biweekly" ? 65 :
+    view === "week" ? 75 : 45;
   const timelineWidth = columns * columnWidth;
 
   const getLeft = (date) =>
@@ -120,6 +126,8 @@ function ProjectDashboard({ tasks }) {
           >
             <option value="week">Weekly View</option>
             <option value="day">Daily View</option>
+            <option value="biweekly">Biweekly View</option>
+            <option value="month">Monthly View</option>
           </select>
         </div>
 
