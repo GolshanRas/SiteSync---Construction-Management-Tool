@@ -1,34 +1,107 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function RoleManagement({user}) {
   const [accounts, setAccounts] = useState([]);
   const [message, setMessage] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
+  const [role, setRole] = useState("Worker");
+  const [password, setPassword] = useState("");
+  const [creating, setCreating] = useState(false);
 
-  const getAccounts = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/accounts", {
+  const fetchAccounts = useCallback(async () => {
+    const response = await fetch("http://localhost:5000/api/accounts", {
       method: "GET",
       headers: {
-        "X-User-Role": user.role,
+        Authorization: `Bearer ${user.session_token}`,
       },
     });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        setAccounts(data);
-      } else {
-        setMessage("Could not load accounts.");
-      }
+    if (!response.ok) {
+      throw new Error("Could not load accounts.");
+    }
+
+    return data;
+  }, [user.session_token]);
+
+  const getAccounts = async () => {
+    try {
+      setAccounts(await fetchAccounts());
     } catch (error) {
       console.error(error);
-      setMessage("Could not connect to the server.");
+      setMessage(
+        error.message === "Could not load accounts."
+          ? error.message
+          : "Could not connect to the server."
+      );
     }
   };
 
   useEffect(() => {
-    getAccounts();
-  }, []);
+    let active = true;
+
+    fetchAccounts()
+      .then((data) => {
+        if (active) {
+          setAccounts(data);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) {
+          setMessage(
+            error.message === "Could not load accounts."
+              ? error.message
+              : "Could not connect to the server."
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fetchAccounts]);
+
+  const createAccount = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    setCreating(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.session_token}`,
+        },
+        body: JSON.stringify({ firstname, lastname, role, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(
+          data.user_id === undefined || data.user_id === null
+            ? "Account created successfully, but the server did not return a user ID."
+            : `Account created successfully! User ID: ${data.user_id}.`
+        );
+        setFirstname("");
+        setLastname("");
+        setRole("Worker");
+        setPassword("");
+        await getAccounts();
+      } else {
+        setMessage(data.message || "Could not create account.");
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("Could not connect to the server.");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const updateRole = async (accountId, newRole) => {
     try {
@@ -39,7 +112,7 @@ function RoleManagement({user}) {
 
           headers: {
             "Content-Type": "application/json",
-            "X-User-Role": user.role,
+            Authorization: `Bearer ${user.session_token}`,
           },
 
           body: JSON.stringify({
@@ -73,10 +146,55 @@ function RoleManagement({user}) {
       </div>
 
       {message && (
-        <div className="manage-message">
+        <div className="manage-message" role="status">
           {message}
         </div>
       )}
+
+      <form onSubmit={createAccount} className="project-form">
+        <h2>Create Account</h2>
+        <label htmlFor="account-firstname">First Name</label>
+        <input
+          id="account-firstname"
+          value={firstname}
+          onChange={(event) => setFirstname(event.target.value)}
+          required
+        />
+
+        <label htmlFor="account-lastname">Last Name</label>
+        <input
+          id="account-lastname"
+          value={lastname}
+          onChange={(event) => setLastname(event.target.value)}
+          required
+        />
+
+        <label htmlFor="account-role">Role</label>
+        <select
+          id="account-role"
+          value={role}
+          onChange={(event) => setRole(event.target.value)}
+        >
+          <option value="Project Manager">Project Manager</option>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Worker">Worker</option>
+          <option value="Admin">Admin</option>
+        </select>
+
+        <label htmlFor="account-password">Password</label>
+        <input
+          id="account-password"
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+        />
+
+        <button type="submit" disabled={creating}>
+          {creating ? "Creating..." : "Create Account"}
+        </button>
+      </form>
 
       <div className="role-table">
 

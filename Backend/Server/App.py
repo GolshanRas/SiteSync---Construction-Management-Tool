@@ -12,11 +12,19 @@ from Client.Roles import *
 from functools import wraps
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+import secrets
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 app = Flask(__name__)
 CORS(app)
 
 db = Database()
+account_token_serializer = URLSafeTimedSerializer(
+    secrets.token_urlsafe(32),
+    salt="site-sync-account"
+)
+
+ACCOUNT_TOKEN_MAX_AGE = 8 * 60 * 60
 
 def require_permission(permission: PermissionForTasks):
     def decorator(func):
@@ -40,6 +48,30 @@ def require_permission(permission: PermissionForTasks):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def require_account_admin(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        authorization = request.headers.get("Authorization", "")
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token:
+            return jsonify({"message": "Unauthorized: Please log in again."}), 401
+
+        try:
+            account_id = account_token_serializer.loads(
+                token,
+                max_age=ACCOUNT_TOKEN_MAX_AGE
+            )
+        except (BadSignature, TypeError, ValueError):
+            return jsonify({"message": "Unauthorized: Please log in again."}), 401
+
+        if db.getAccountRole(account_id) != Roles.ADMIN.value:
+            return jsonify({"message": "Access denied: Admin role required."}), 403
+
+        return func(*args, **kwargs)
+    return wrapper
+
 
 TASK_STATUSES = {
     "Not Started",
@@ -108,22 +140,8 @@ def test():
 
 
 @app.route("/api/accounts", methods=["POST"])
-@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
-def add_account():
-
-    data = request.get_json()
-
-    db.addAccount(
-        data["lastname"],
-        data["firstname"],
-        data["role"],
-        data["password"]
-    )
-
-    return jsonify({"message": "Account created!"})
-
 @app.route("/api/register", methods=["POST"])
-@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
+@require_account_admin
 def register():
     data = request.get_json(silent=True) or {}
 
@@ -154,10 +172,11 @@ def register():
             "message": "An account with that name already exists."
         }), 409
 
-    db.addAccount(lastname, firstname, role, password)
+    user_id = db.addAccount(lastname, firstname, role, password)
 
     return jsonify({
-        "message": "Account created!"
+        "message": "Account created!",
+        "user_id": user_id
     }), 201
 
 ADMIN_CODEWORD = "CPS714Admin"
@@ -165,6 +184,11 @@ ADMIN_CODEWORD = "CPS714Admin"
 @app.route("/api/register-admin", methods=["POST"])
 def register_admin():
     data = request.get_json(silent=True) or {}
+
+    if db.hasAdminAccount():
+        return jsonify({
+            "message": "An administrator account already exists. Ask an admin to create accounts."
+        }), 403
 
     provided_codeword = str(data.get("codeword", "")).strip()
     firstname = str(data.get("firstname", "")).strip()
@@ -215,6 +239,7 @@ def login():
             "message": "Invalid User ID or password."
         }), 401
 
+    account["session_token"] = account_token_serializer.dumps(account["id"])
     return jsonify(account)
 
 
@@ -254,7 +279,7 @@ def get_projects():
     return jsonify(project_list)
 
 @app.route("/api/accounts", methods=["GET"])
-@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
+@require_account_admin
 def get_accounts():
     accounts = db.getAccounts()
 
@@ -272,7 +297,7 @@ def get_accounts():
 
 
 @app.route("/api/accounts/<int:account_id>/role", methods=["PUT"])
-@require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
+@require_account_admin
 def update_role(account_id):
     data = request.get_json()
 

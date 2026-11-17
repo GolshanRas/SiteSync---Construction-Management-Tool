@@ -109,7 +109,7 @@ function Login({ onLogin }) {
           <h1>{isAdminRegister ? "Admin Registration" : "Log In"}</h1>
           <p className="login-subtitle">
             {isAdminRegister
-              ? "Register a new administrator account using your codeword."
+              ? "Set up the first administrator account using your codeword."
               : "Sign in to your SiteSync account."}
           </p>
 
@@ -227,7 +227,7 @@ function Login({ onLogin }) {
                 {loading ? "Signing in..." : "Log In"}
               </button>
 
-              {/* Admin Link */}
+              {/* Initial admin setup link */}
               <div style={{ marginTop: "1.25rem", textAlign: "center", fontSize: "0.9rem" }}>
                 <button
                   type="button"
@@ -243,7 +243,7 @@ function Login({ onLogin }) {
                     font: "inherit",
                   }}
                 >
-                  Are you an Admin?
+                  Set Up the First Admin
                 </button>
               </div>
             </form>

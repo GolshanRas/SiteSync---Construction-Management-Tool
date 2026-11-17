@@ -130,8 +130,10 @@ class Database:
             (lastname, firstname, role, password)
         )
 
+        account_id = query.lastrowid
         con.commit()
         con.close()
+        return account_id
 
 
     def addProject(self, name, description, location, start_date, end_date):
@@ -175,6 +177,24 @@ class Database:
         con.close()
 
         return accounts
+
+
+    def hasAdminAccount(self):
+        con = self.getConnection()
+        query = con.cursor()
+        query.execute("SELECT 1 FROM Account WHERE role = 'Admin' LIMIT 1")
+        exists = query.fetchone() is not None
+        con.close()
+        return exists
+
+
+    def getAccountRole(self, account_id):
+        con = self.getConnection()
+        query = con.cursor()
+        query.execute("SELECT role FROM Account WHERE id = ?", (account_id,))
+        row = query.fetchone()
+        con.close()
+        return row[0] if row else None
 
 
     def updateRole(self, account_id, role):
