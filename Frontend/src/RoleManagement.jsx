@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authHeaders } from "./permissions";
 
 function RoleManagement({user}) {
   const [accounts, setAccounts] = useState([]);
@@ -8,9 +9,7 @@ function RoleManagement({user}) {
     try {
       const response = await fetch("http://localhost:5000/api/accounts", {
       method: "GET",
-      headers: {
-        "X-User-Role": user.role,
-      },
+      headers: authHeaders(user),
     });
 
       const data = await response.json();
@@ -28,7 +27,7 @@ function RoleManagement({user}) {
 
   useEffect(() => {
     getAccounts();
-  }, []);
+  }, [user.id, user.role]);
 
   const updateRole = async (accountId, newRole) => {
     try {
@@ -39,7 +38,7 @@ function RoleManagement({user}) {
 
           headers: {
             "Content-Type": "application/json",
-            "X-User-Role": user.role,
+            ...authHeaders(user),
           },
 
           body: JSON.stringify({

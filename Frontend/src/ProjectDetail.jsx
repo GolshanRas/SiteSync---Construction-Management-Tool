@@ -5,9 +5,11 @@ import TaskCard from "./TaskCard";
 import ProjectCosts from "./ProjectCosts";
 import ProjectDashboard from "./ProjectDashboard";
 import ProjectOverview from "./ProjectOverview";
+import { can , authHeaders} from "./permissions";
+import ProjectMembers from "./ProjectMembers";
 
 // Roles allowed to create, edit, and manage tasks.
-const TASK_MANAGER_ROLES = ["Admin", "PM", "Project Manager", "Supervisor"];
+// const TASK_MANAGER_ROLES = ["Admin", "PM", "Project Manager", "Supervisor"];
 
 function ProjectDetail({ project, user, onBack }) {
   const [tasks, setTasks] = useState([]);
@@ -15,7 +17,7 @@ function ProjectDetail({ project, user, onBack }) {
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(can(user.role, "view_overview") ? "overview" : "tasks");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("deadline");
   const [sortDirection, setSortDirection] = useState("asc");
@@ -23,7 +25,15 @@ function ProjectDetail({ project, user, onBack }) {
   const [filterStatus, setFilterStatus] = useState([]);
   const [filterUsers, setFilterUsers] = useState([]);
   const [userSearch, setUserSearch] = useState("");
-  const canManage = TASK_MANAGER_ROLES.includes(user.role);
+  // const canManage = TASK_MANAGER_ROLES.includes(user.role);
+  const canManage = can(user.role, "manage_tasks");
+  const canDeleteProject = can(user.role, "delete_project");
+
+  const canViewOverview = can(user.role, "view_overview");
+  const canViewCosts = can(user.role, "view_costs");
+  const canViewDashboard = can(user.role, "view_dashboard");
+  const canViewMembers = can(user.role, "view_members");
+
 
   // ---------- FETCH PROJECT TASKS ----------
 
@@ -35,12 +45,10 @@ function ProjectDetail({ project, user, onBack }) {
     setTasks([]);
     setNotice("");
     setShowForm(false);
-    setActiveTab("overview");
+    setActiveTab(can(user.role, "view_overview") ? "overview" : "tasks");
 
     fetch(`http://localhost:5000/api/projects/${project.id}/tasks`, {
-      headers: {
-        "X-User-Role": user.role,
-      },
+      headers: authHeaders(user),
     })
       .then((response) =>
         response.json().then((data) => ({
@@ -71,7 +79,7 @@ function ProjectDetail({ project, user, onBack }) {
     return () => {
       ignore = true;
     };
-  }, [project.id, user.role]);
+  }, [project.id, user.id, user.role]);
 
   // ---------- TASK MANAGEMENT ----------
 
@@ -216,6 +224,32 @@ function ProjectDetail({ project, user, onBack }) {
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
+
+  const handleDeleteProject = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${project.name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/projects/${project.id}`,
+        {
+          method: "DELETE",
+          headers: authHeaders(user),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Could not delete project.");
+      }
+
+      onBack();
+    } catch (error) {
+      setMessage(error.message);
+    }
+  };  
+
   // ---------- RENDER ----------
 
   return (
@@ -223,6 +257,7 @@ function ProjectDetail({ project, user, onBack }) {
 
       {/* ---------- BACK BUTTON ---------- */}
 
+      <div className="project-header-actions">
       <button
         type="button"
         className="back-link"
@@ -230,6 +265,17 @@ function ProjectDetail({ project, user, onBack }) {
       >
         &larr; Back to projects
       </button>
+
+      {canDeleteProject && (
+        <button
+          type="button"
+          className="delete-project-button"
+          onClick={handleDeleteProject}
+        >
+          Delete Project
+        </button>
+      )}
+    </div>
 
       {/* ---------- PROJECT SUMMARY ---------- */}
 
@@ -271,8 +317,10 @@ function ProjectDetail({ project, user, onBack }) {
 
       {/* ---------- PROJECT TABS ---------- */}
 
-      <div className="project-tabs">
+          
+    <div className="project-tabs">
 
+      {canViewOverview && (
         <button
           type="button"
           className={
@@ -284,19 +332,21 @@ function ProjectDetail({ project, user, onBack }) {
         >
           Overview
         </button>
+      )}
 
-        <button
-          type="button"
-          className={
-            activeTab === "tasks"
-              ? "project-tab active"
-              : "project-tab"
-          }
-          onClick={() => setActiveTab("tasks")}
-        >
-          Tasks
-        </button>
+      <button
+        type="button"
+        className={
+          activeTab === "tasks"
+            ? "project-tab active"
+            : "project-tab"
+        }
+        onClick={() => setActiveTab("tasks")}
+      >
+        Tasks
+      </button>
 
+      {canViewCosts && (
         <button
           type="button"
           className={
@@ -308,7 +358,9 @@ function ProjectDetail({ project, user, onBack }) {
         >
           Costs
         </button>
+      )}
 
+      {canViewDashboard && (
         <button
           type="button"
           className={
@@ -320,11 +372,27 @@ function ProjectDetail({ project, user, onBack }) {
         >
           Dashboard
         </button>
+      )}
 
-      </div>
+      {canViewMembers && (
+        <button
+          type="button"
+          className={
+            activeTab === "members"
+              ? "project-tab active"
+              : "project-tab"
+          }
+          onClick={() => setActiveTab("members")}
+        >
+          Members
+        </button>
+      )}
+
+    </div>
+
 
       {/* ---------- OVERVIEW TAB ---------- */}
-      {activeTab === "overview" && (
+      {activeTab === "overview" && canViewOverview && (
         loading ? (
           <p>Loading project overview...</p>
         ) : (
@@ -615,7 +683,7 @@ function ProjectDetail({ project, user, onBack }) {
 
       {/* ---------- COSTS TAB ---------- */}
 
-      {activeTab === "costs" && (
+      {activeTab === "costs" && canViewCosts && (
         <ProjectCosts
           project={project}
           user={user}
@@ -625,12 +693,21 @@ function ProjectDetail({ project, user, onBack }) {
 
       {/* ---------- DASHBOARD TAB ---------- */}
 
-      {activeTab === "dashboard" && (
+      {activeTab === "dashboard" && canViewDashboard && (
         loading ? (
           <p>Loading dashboard...</p>
         ) : (
-          <ProjectDashboard tasks={tasks} />
+          <ProjectDashboard tasks={tasks} project={project} user={user} />
         )
+      )}
+    
+    {/* ---------- MEMBERS TAB ---------- */}
+
+      {activeTab === "members" && canViewMembers && (
+        <ProjectMembers
+          project={project}
+          user={user}
+        />
       )}
     </div>
   );

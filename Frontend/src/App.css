@@ -2838,3 +2838,61 @@ body {
     flex-wrap: wrap;
   }
 }
+/* Add Project Member */
+.member-add-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.member-add-row select {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.member-add-row .action-button {
+  height: 42px;
+  padding: 0 18px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .member-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .member-add-row select,
+  .member-add-row .action-button {
+    width: 100%;
+  }
+}
+.project-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.delete-project-button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.delete-project-button:hover {
+  background: #b91c1c;
+}

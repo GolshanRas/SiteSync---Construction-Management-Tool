@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authHeaders } from "./permissions";
 
 function Dashboard({ user, setPage }) {
   const [projects, setProjects] = useState([]);
@@ -16,10 +17,7 @@ function Dashboard({ user, setPage }) {
       try {
         // 1. Fetch Projects (Available to all roles with VIEW_PROJECT permission)
         const projectsRes = await fetch("http://localhost:5000/api/projects", {
-          headers: {
-            "Content-Type": "application/json",
-            "X-User-Role": user?.role || "",
-          },
+          headers: authHeaders(user),
         });
 
         if (!projectsRes.ok) {
@@ -31,10 +29,7 @@ function Dashboard({ user, setPage }) {
         let accountsTotal = null;
         if (user?.role === "Admin") {
           const accountsRes = await fetch("http://localhost:5000/api/accounts", {
-            headers: {
-              "Content-Type": "application/json",
-              "X-User-Role": user?.role || "",
-            },
+            headers: authHeaders(user),
           });
           if (accountsRes.ok) {
             const accountsData = await accountsRes.json();

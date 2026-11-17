@@ -18,28 +18,29 @@ CORS(app)
 
 db = Database()
 
+
 def require_permission(permission: PermissionForTasks):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             caller_role_str = request.headers.get("X-User-Role")
+
             if not caller_role_str:
-                return jsonify({"message": "Unauthorized: Missing user role"}), 401
+                return jsonify({"message": "Missing user role"}), 401
 
             try:
                 caller_role = Roles(caller_role_str)
             except ValueError:
-                return jsonify({"message": f"Invalid role: '{caller_role_str}'"}), 400
+                return jsonify({"message": "Invalid role"}), 400
 
-            allowed_permissions = ROLE_PERMISSIONS.get(caller_role, set())
-            if permission not in allowed_permissions:
-                return jsonify({
-                    "message": f"Access Denied: Role '{caller_role.value}' lacks permission '{permission.value}'"
-                }), 403
+            if not hasPermission(caller_role, permission):
+                return jsonify({"message": "Access denied"}), 403
 
             return func(*args, **kwargs)
+
         return wrapper
     return decorator
+
 
 TASK_STATUSES = {
     "Not Started",
@@ -219,7 +220,7 @@ def login():
 
 
 @app.route("/api/projects", methods=["POST"])
-@require_permission(PermissionForTasks.MANAGE_PROJECT)
+@require_permission(PermissionForTasks.CREATE_PROJECT)
 def create_project():
     data = request.get_json()
 
@@ -236,7 +237,16 @@ def create_project():
 @app.route("/api/projects", methods=["GET"])
 @require_permission(PermissionForTasks.VIEW_PROJECT)
 def get_projects():
-    projects = db.getProjects()
+    role = request.headers.get("X-User-Role")
+    account_id = request.headers.get("X-User-Id", type=int)
+
+    if role in ("Admin", "Project Manager"):
+        projects = db.getProjects()
+    else:
+        if account_id is None:
+            return jsonify({"message": "Missing user ID"}), 401
+
+        projects = db.getProjectsForUser(account_id, role)
 
     project_list = []
 
@@ -252,7 +262,39 @@ def get_projects():
         })
 
     return jsonify(project_list)
+@app.route("/api/projects/<int:project_id>", methods=["DELETE"])
+def delete_project(project_id):
+    role = request.headers.get("X-User-Role")
 
+    if role not in ("Admin", "Project Manager"):
+        return jsonify({"message": "Access denied"}), 403
+
+    con = db.getConnection()
+
+    try:
+        cursor = con.cursor()
+
+        cursor.execute(
+            "DELETE FROM Project WHERE id = ?",
+            (project_id,)
+        )
+
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Project not found"}), 404
+
+        con.commit()
+
+        return jsonify({
+            "message": "Project deleted successfully!"
+        }), 200
+
+    except Exception as error:
+        con.rollback()
+        return jsonify({"message": str(error)}), 500
+
+    finally:
+        con.close()
+        
 @app.route("/api/accounts", methods=["GET"])
 @require_permission(PermissionForTasks.MANAGE_ACCOUNTS)
 def get_accounts():
@@ -375,7 +417,7 @@ def delete_request(request_id):
     return jsonify({"message": "Request deleted successfully!"})
 
 @app.route("/api/projects/<int:project_id>/tasks", methods=["GET"])
-@require_permission(PermissionForTasks.VIEW_PROJECT)
+@require_permission(PermissionForTasks.VIEW_TASKS)
 def get_tasks(project_id):
     if not db.projectExists(project_id):
         return jsonify({"message": "Project not found."}), 404
@@ -627,7 +669,7 @@ def validate_expense(data):
     
 # Get all expenses for a project
 @app.route("/api/projects/<int:project_id>/expenses", methods=["GET"])
-@require_permission(PermissionForTasks.VIEW_PROJECT)
+@require_permission(PermissionForTasks.VIEW_COSTS)
 def get_project_expenses(project_id):
 
     if not db.projectExists(project_id):
@@ -640,7 +682,7 @@ def get_project_expenses(project_id):
 
 # Add a new expense
 @app.route("/api/projects/<int:project_id>/expenses", methods=["POST"])
-@require_permission(PermissionForTasks.MANAGE_PROJECT)
+@require_permission(PermissionForTasks.ADD_EXPENSE)
 def create_project_expense(project_id):
 
     if not db.projectExists(project_id):
@@ -671,7 +713,7 @@ def create_project_expense(project_id):
     "/api/projects/<int:project_id>/expenses/<int:expense_id>",
     methods=["PUT"]
 )
-@require_permission(PermissionForTasks.MANAGE_PROJECT)
+@require_permission(PermissionForTasks.EDIT_EXPENSE)
 def edit_project_expense(project_id, expense_id):
 
     if not db.projectExists(project_id):
@@ -705,7 +747,7 @@ def edit_project_expense(project_id, expense_id):
     "/api/projects/<int:project_id>/expenses/<int:expense_id>",
     methods=["DELETE"]
 )
-@require_permission(PermissionForTasks.MANAGE_PROJECT)
+@require_permission(PermissionForTasks.DELETE_EXPENSE)
 def delete_project_expense(project_id, expense_id):
 
     if not db.projectExists(project_id):
@@ -723,7 +765,7 @@ def delete_project_expense(project_id, expense_id):
 
 # Get the project's financial summary
 @app.route("/api/projects/<int:project_id>/costs", methods=["GET"])
-@require_permission(PermissionForTasks.VIEW_PROJECT)
+@require_permission(PermissionForTasks.VIEW_COST_SUMMARY)
 def get_project_costs(project_id):
 
     overview = db.getProjectCostOverview(project_id)
@@ -736,7 +778,7 @@ def get_project_costs(project_id):
 
 # Set or update the project's total budget
 @app.route("/api/projects/<int:project_id>/budget", methods=["PUT"])
-@require_permission(PermissionForTasks.MANAGE_PROJECT)
+@require_permission(PermissionForTasks.MANAGE_BUDGET)
 def update_project_budget(project_id):
 
     data = request.get_json(silent=True)
@@ -780,7 +822,7 @@ def update_project_budget(project_id):
 
     
 @app.route("/api/projects/<int:project_id>/planned-costs", methods=["GET"])
-@require_permission(PermissionForTasks.VIEW_PROJECT)
+@require_permission(PermissionForTasks.VIEW_COST_SUMMARY)
 def get_planned_costs(project_id):
     con = db.getConnection()
 
@@ -799,7 +841,7 @@ def get_planned_costs(project_id):
 
 
 @app.route("/api/projects/<int:project_id>/planned-costs", methods=["PUT"])
-@require_permission(PermissionForTasks.MANAGE_PROJECT)
+@require_permission(PermissionForTasks.MANAGE_BUDGET)
 def update_planned_costs(project_id):
     from decimal import Decimal, InvalidOperation
 
@@ -845,6 +887,121 @@ def update_planned_costs(project_id):
         return jsonify({"message": "Project not found."}), 404
 
     return jsonify(db.getPlannedCosts(project_id)), 200
+
+# View members of a project
+@app.route("/api/projects/<int:project_id>/members", methods=["GET"])
+@require_permission(PermissionForTasks.VIEW_MEMBERS)
+def get_project_members(project_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found"}), 404
+
+    members = db.getProjectMembers(project_id)
+    return jsonify(members)
+
+
+# Get accounts available to add to projects
+@app.route("/api/member-candidates", methods=["GET"])
+@require_permission(PermissionForTasks.MANAGE_MEMBERS)
+def get_member_candidates():
+
+    accounts = db.getAccounts()
+
+    return jsonify([
+        {
+            "id": account[0],
+            "firstname": account[1],
+            "lastname": account[2],
+            "role": account[3]
+        }
+        for account in accounts
+    ])
+
+
+# Add a member to a project
+@app.route("/api/projects/<int:project_id>/members", methods=["POST"])
+@require_permission(PermissionForTasks.MANAGE_MEMBERS)
+def add_project_member(project_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        account_id = int(data["account_id"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"message": "Invalid account ID"}), 400
+
+    valid_accounts = {
+        account[0] for account in db.getAccounts()
+    }
+
+    if account_id not in valid_accounts:
+        return jsonify({"message": "Account not found"}), 404
+
+    db.addProjectMember(project_id, account_id)
+
+    return jsonify({
+        "message": "Member added successfully"
+    }), 201
+
+
+# Remove a member from a project
+@app.route(
+    "/api/projects/<int:project_id>/members/<int:account_id>",
+    methods=["DELETE"]
+)
+@require_permission(PermissionForTasks.MANAGE_MEMBERS)
+def remove_project_member(project_id, account_id):
+
+    if not db.projectExists(project_id):
+        return jsonify({"message": "Project not found"}), 404
+
+    db.removeProjectMember(project_id, account_id)
+
+    return jsonify({
+        "message": "Member removed successfully"
+    })
+
+@app.route("/api/tasks/<int:task_id>/status", methods=["PUT"])
+@require_permission(PermissionForTasks.UPDATE_STATUS)
+def update_task_status(task_id):
+
+    task = db.getTask(task_id)
+
+    if task is None:
+        return jsonify({"message": "Task not found"}), 404
+
+    role = request.headers.get("X-User-Role")
+    user_id = request.headers.get("X-User-Id", type=int)
+
+    if role not in ("Admin", "Project Manager"):
+        if user_id is None:
+            return jsonify({"message": "Missing user ID"}), 401
+
+        if not db.isProjectMember(task["project_id"], user_id):
+            return jsonify({"message": "Project access denied"}), 403
+
+    if role == "Worker":
+        assigned_worker_ids = {
+            worker["id"] for worker in task["workers"]
+        }
+
+        if user_id not in assigned_worker_ids:
+            return jsonify({
+                "message": "You can only update your assigned tasks"
+            }), 403
+
+    data = request.get_json(silent=True) or {}
+    status = data.get("status")
+
+    if status not in TASK_STATUSES:
+        return jsonify({"message": "Invalid task status"}), 400
+
+    db.updateTask(task_id, {"status": status})
+
+    return jsonify(db.getTask(task_id))
 
 if __name__ == "__main__":
     print(app.url_map)

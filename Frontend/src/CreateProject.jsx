@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { authHeaders } from "./permissions";
 
 function CreateProject({user}) {
   const [name, setName] = useState("");
@@ -24,7 +25,7 @@ function CreateProject({user}) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Role": user.role,
+          ...authHeaders(user),
         },
         body: JSON.stringify(project),
       });
@@ -40,7 +41,7 @@ function CreateProject({user}) {
         setStartDate("");
         setEndDate("");
       } else {
-        setMessage("Could not create project.");
+        setMessage(data.message || "Could not create project.");
       }
     } catch (error) {
       console.error(error);

@@ -7,57 +7,92 @@ class Roles(StrEnum):
     SUPERVISOR = "Supervisor"
 
 class PermissionForTasks(StrEnum):
-    MANAGE_PROJECT = "manageP" # create, edit, assign and delete projects
-    MANAGE_TASKS = "manageT"  # create, edit, assign and delete tasks
-    MANAGE_ACCOUNTS = "manageA" # create, edit and delete accounts, give them roles
-    SEND_REQUEST = "request" # send requests in a project
-    MANAGE_REQUESTS = "manageR" # manage requests
-    VIEW_PROJECT = "view" #project and tasks
-    UPDATE_STATUS = "update"
-    ANALYSIS = "analysis"
-    CONTACT = "contact" # contact supervisor
-    MANAGE_PERM = "managePerm"
+    VIEW_PROJECT = "view_project"
+    VIEW_ALL_PROJECTS = "view_all_projects"
+    CREATE_PROJECT = "create_project"
+    EDIT_PROJECT = "edit_project"
+    DELETE_PROJECT = "delete_project"
 
-ROLE_PERMISSIONS: dict[Roles, set[PermissionForTasks]] = {
-        Roles.ADMIN: {
-        PermissionForTasks.MANAGE_PERM,
-        PermissionForTasks.MANAGE_ACCOUNTS,
-        PermissionForTasks.MANAGE_PROJECT,
-        PermissionForTasks.MANAGE_TASKS,
-        PermissionForTasks.VIEW_PROJECT,
-        PermissionForTasks.SEND_REQUEST,
-        PermissionForTasks.MANAGE_REQUESTS,
-        PermissionForTasks.CONTACT
-    },
+    VIEW_TASKS = "view_tasks"
+    MANAGE_TASKS = "manage_tasks"
+    UPDATE_STATUS = "update_status"
+
+    VIEW_COSTS = "view_costs"
+    VIEW_COST_SUMMARY = "view_cost_summary"
+    ADD_EXPENSE = "add_expense"
+    EDIT_EXPENSE = "edit_expense"
+    DELETE_EXPENSE = "delete_expense"
+    MANAGE_BUDGET = "manage_budget"
+
+    VIEW_OVERVIEW = "view_overview"
+    VIEW_DASHBOARD = "view_dashboard"
+    VIEW_FULL_ANALYTICS = "view_full_analytics"
+
+    VIEW_MEMBERS = "view_members"
+    MANAGE_MEMBERS = "manage_members"
+
+    MANAGE_ACCOUNTS = "manage_accounts"
+    MANAGE_PERM = "manage_permissions"
+
+    SEND_REQUEST = "send_request"
+    MANAGE_REQUESTS = "manage_requests"
+    CONTACT = "contact"
+
+
+ROLE_PERMISSIONS = {
+    Roles.ADMIN: set(PermissionForTasks),
     Roles.WORKER: {
         PermissionForTasks.VIEW_PROJECT,
+        PermissionForTasks.VIEW_TASKS,
         PermissionForTasks.UPDATE_STATUS,
+        PermissionForTasks.VIEW_DASHBOARD,
+        PermissionForTasks.VIEW_MEMBERS,
         PermissionForTasks.SEND_REQUEST,
-        PermissionForTasks.CONTACT
+        PermissionForTasks.CONTACT,
     },
     Roles.SUPERVISOR: {
-        PermissionForTasks.MANAGE_TASKS,
-        PermissionForTasks.MANAGE_PROJECT,
         PermissionForTasks.VIEW_PROJECT,
+        PermissionForTasks.VIEW_TASKS,
+        PermissionForTasks.MANAGE_TASKS,
+        PermissionForTasks.UPDATE_STATUS,
+        PermissionForTasks.VIEW_COSTS,
+        PermissionForTasks.ADD_EXPENSE,
+        PermissionForTasks.VIEW_DASHBOARD,
+        PermissionForTasks.VIEW_MEMBERS,
         PermissionForTasks.SEND_REQUEST,
         PermissionForTasks.MANAGE_REQUESTS,
-        PermissionForTasks.UPDATE_STATUS,
-        PermissionForTasks.CONTACT
+        PermissionForTasks.CONTACT,
     },
     Roles.PM: {
-        PermissionForTasks.MANAGE_TASKS,
-        PermissionForTasks.MANAGE_PROJECT,
         PermissionForTasks.VIEW_PROJECT,
+        PermissionForTasks.VIEW_ALL_PROJECTS,
+        PermissionForTasks.CREATE_PROJECT,
+        PermissionForTasks.EDIT_PROJECT,
+        PermissionForTasks.VIEW_TASKS,
+        PermissionForTasks.MANAGE_TASKS,
+        PermissionForTasks.UPDATE_STATUS,
+        PermissionForTasks.VIEW_COSTS,
+        PermissionForTasks.VIEW_COST_SUMMARY,
+        PermissionForTasks.ADD_EXPENSE,
+        PermissionForTasks.EDIT_EXPENSE,
+        PermissionForTasks.DELETE_EXPENSE,
+        PermissionForTasks.MANAGE_BUDGET,
+        PermissionForTasks.VIEW_OVERVIEW,
+        PermissionForTasks.VIEW_DASHBOARD,
+        PermissionForTasks.VIEW_FULL_ANALYTICS,
+        PermissionForTasks.VIEW_MEMBERS,
+        PermissionForTasks.MANAGE_MEMBERS,
         PermissionForTasks.SEND_REQUEST,
         PermissionForTasks.MANAGE_REQUESTS,
-        PermissionForTasks.UPDATE_STATUS,
         PermissionForTasks.CONTACT,
-        PermissionForTasks.ANALYSIS
     }
 }
 
 def getPermissions(role: Roles):
-    return ROLE_PERMISSIONS.get(role, set())
+    try:
+        return ROLE_PERMISSIONS.get(Roles(role), set())
+    except ValueError:
+        return set()
 
 def hasPermission(role: Roles, permission: PermissionForTasks):
-    return permission in ROLE_PERMISSIONS.get(role, set())
+    return permission in getPermissions(role)

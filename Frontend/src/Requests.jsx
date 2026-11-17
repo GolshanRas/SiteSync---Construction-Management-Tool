@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { can, authHeaders } from "./permissions";
 function getToday() {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -19,9 +19,7 @@ function Requests({ user }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const canManageRequests = ["Admin", "Project Manager", "Supervisor"].includes(
-    user.role
-  );
+  const canManageRequests = can(user.role, "manage_requests");
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +30,7 @@ function Requests({ user }) {
 
       try {
         const response = await fetch("http://localhost:5000/api/projects", {
-          headers: { "X-User-Role": user.role },
+          headers: authHeaders(user),
         });
         const data = await response.json();
 
@@ -42,7 +40,11 @@ function Requests({ user }) {
 
         if (!cancelled) {
           setProjects(data);
-          setProjectId((current) => current || String(data[0]?.id || ""));
+          setProjectId((current) =>
+            data.some((project) => String(project.id) === current)
+              ? current
+              : String(data[0]?.id || "")
+          );
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -60,7 +62,7 @@ function Requests({ user }) {
     return () => {
       cancelled = true;
     };
-  }, [user.role]);
+  }, [user.id, user.role]);
 
   useEffect(() => {
     if (!projectId) {
@@ -77,7 +79,7 @@ function Requests({ user }) {
       try {
         const response = await fetch(
           `http://localhost:5000/api/requests?project_id=${encodeURIComponent(projectId)}`,
-          { headers: { "X-User-Role": user.role } }
+          { headers: authHeaders(user)}
         );
         const data = await response.json();
 
@@ -104,7 +106,7 @@ function Requests({ user }) {
     return () => {
       cancelled = true;
     };
-  }, [projectId, refreshKey, user.role]);
+  }, [projectId, refreshKey, user.id, user.role]);
 
   const submitRequest = async (event) => {
     event.preventDefault();
@@ -117,7 +119,7 @@ function Requests({ user }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Role": user.role,
+          ...authHeaders(user),
         },
         body: JSON.stringify({
           project_id: Number(projectId),
@@ -153,7 +155,7 @@ function Requests({ user }) {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Role": user.role,
+            ...authHeaders(user),
           },
           body: JSON.stringify({ new_status: newStatus }),
         }
@@ -180,7 +182,7 @@ function Requests({ user }) {
         `http://localhost:5000/api/requests/${requestId}`,
         {
           method: "DELETE",
-          headers: { "X-User-Role": user.role },
+          headers: { ...authHeaders(user) },
         }
       );
       const data = await response.json();

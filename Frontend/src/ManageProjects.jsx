@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ProjectDetail from "./ProjectDetail";
+import { authHeaders } from "./permissions";
 
 function ManageProjects({ user}) {
   const [projects, setProjects] = useState([]);
@@ -10,9 +11,7 @@ function ManageProjects({ user}) {
     try {
       const response = await fetch("http://localhost:5000/api/projects", {
         method: "GET",
-        headers: {
-          "X-User-Role": user.role,
-        },
+        headers: authHeaders(user),
       });
 
       const data = await response.json();
@@ -30,14 +29,17 @@ function ManageProjects({ user}) {
 
   useEffect(() => {
     getProjects();
-  }, []);
+  }, [user.id, user.role]);
 
   if (selectedProject) {
     return (
       <ProjectDetail
         project={selectedProject}
         user={user}
-        onBack={() => setSelectedProject(null)}
+        onBack={() => {
+          setSelectedProject(null);
+          getProjects();
+        }}
       />
     );
   }
@@ -49,7 +51,7 @@ function ManageProjects({ user}) {
       {message && <p>{message}</p>}
 
       {projects.length === 0 ? (
-        <p>No projects have been created yet.</p>
+        <p>No projects have been assigned to your accountyet.</p>
       ) : (
         <div className="project-list">
 

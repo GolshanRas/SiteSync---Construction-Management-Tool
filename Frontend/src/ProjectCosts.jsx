@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
+import { can, authHeaders } from "./permissions";
 
 const API = "http://localhost:5000";
 const CATEGORIES = ["Labour", "Materials", "Equipment", "Travel", "Other"];
@@ -24,7 +25,11 @@ const blankExpense = () => ({
 });
 
 function ProjectCosts({ project, user }) {
-  const canManage = ["Admin", "Project Manager"].includes(user.role);
+  const canManage = can(user.role, "manage_budget");
+  const canAddExpense = can(user.role, "add_expense");
+  const canViewSummary = can(user.role, "view_cost_summary");
+  // const canEditExpense = can(user.role, "edit_expense");
+  // const canDeleteExpense = can(user.role, "delete_expense");
 
   const [overview, setOverview] = useState(null);
   const [expenses, setExpenses] = useState([]);
@@ -50,12 +55,12 @@ function ProjectCosts({ project, user }) {
       const response = await fetch(`${API}${path}`, {
         ...options,
         headers: {
-          "X-User-Role": user.role,
+          ...authHeaders(user),
           ...(options.body
             ? { "Content-Type": "application/json" }
             : {}),
           ...options.headers,
-        },
+          },
       });
 
       const data = await response.json();
@@ -68,30 +73,41 @@ function ProjectCosts({ project, user }) {
 
       return data;
     },
-    [user.role]
+    [user.id, user.role]
   );
 
   // Load project costs, expenses, and planned costs
-  const refresh = useCallback(async () => {
-    const [costs, items, plannedData] = await Promise.all([
-      request(`/api/projects/${project.id}/costs`),
-      request(`/api/projects/${project.id}/expenses`),
-      request(`/api/projects/${project.id}/planned-costs`),
-    ]);
 
-    setOverview(costs);
+  const refresh = useCallback(async () => {
+    const items = await request(
+      `/api/projects/${project.id}/expenses`
+    );
+
     setExpenses(items);
 
-    const values = {};
+    if (canViewSummary) {
+      const [costs, plannedData] = await Promise.all([
+        request(`/api/projects/${project.id}/costs`),
+        request(`/api/projects/${project.id}/planned-costs`),
+      ]);
 
-    CATEGORIES.forEach((category) => {
-      values[category] = (
-        (plannedData[category] || 0) / 100
-      ).toFixed(2);
-    });
+      setOverview(costs);
 
-    setPlanned(values);
-  }, [project.id, request]);
+      const values = {};
+
+      CATEGORIES.forEach((category) => {
+        values[category] = (
+          (plannedData[category] || 0) / 100
+        ).toFixed(2);
+      });
+
+      setPlanned(values);
+    } else {
+      setOverview(null);
+      setPlanned({});
+    }
+  }, [project.id, request, canViewSummary]);
+
 
   useEffect(() => {
     let active = true;
@@ -102,38 +118,48 @@ function ProjectCosts({ project, user }) {
     setExpenses([]);
     setPlanned({});
 
-    Promise.all([
-      request(`/api/projects/${project.id}/costs`),
-      request(`/api/projects/${project.id}/expenses`),
-      request(`/api/projects/${project.id}/planned-costs`),
-    ])
-      .then(([costs, items, plannedData]) => {
-        if (!active) return;
+    async function loadCosts() {
+      try {
+        const items = await request(
+          `/api/projects/${project.id}/expenses`
+        );
 
-        setOverview(costs);
+        if (!active) return;
         setExpenses(items);
 
-        const values = {};
+        if (canViewSummary) {
+          const [costs, plannedData] = await Promise.all([
+            request(`/api/projects/${project.id}/costs`),
+            request(`/api/projects/${project.id}/planned-costs`),
+          ]);
 
-        CATEGORIES.forEach((category) => {
-          values[category] = (
-            (plannedData[category] || 0) / 100
-          ).toFixed(2);
-        });
+          if (!active) return;
 
-        setPlanned(values);
-      })
-      .catch((err) => {
+          setOverview(costs);
+
+          const values = {};
+
+          CATEGORIES.forEach((category) => {
+            values[category] = (
+              (plannedData[category] || 0) / 100
+            ).toFixed(2);
+          });
+
+          setPlanned(values);
+        }
+      } catch (err) {
         if (active) setError(err.message);
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
+
+    loadCosts();
 
     return () => {
       active = false;
     };
-  }, [project.id, request]);
+  }, [project.id, request, canViewSummary]);
 
   // Save budget when user presses Enter or clicks outside
   const saveBudget = async () => {
@@ -307,7 +333,7 @@ function ProjectCosts({ project, user }) {
   return (
     <section className="cost-section" aria-label="Project costs">
       <div className="section-header">
-        <h2>Project Cost Overview</h2>
+        <h2>{canViewSummary ? "Project Cost Overview" : "Project Expenses"}</h2>
       </div>
 
       {loading && <p>Loading project costs...</p>}
@@ -533,7 +559,7 @@ function ProjectCosts({ project, user }) {
       <div className="section-header">
         <h2>Expenses</h2>
 
-        {canManage && !editingExpense && (
+        {canAddExpense && !editingExpense && (
           <button
             type="button"
             className="action-button"
@@ -544,7 +570,7 @@ function ProjectCosts({ project, user }) {
         )}
       </div>
 
-      {editingExpense && canManage && (
+      {editingExpense && canAddExpense && (
         <form
           className="project-form cost-form"
           onSubmit={saveExpense}
@@ -620,7 +646,7 @@ function ProjectCosts({ project, user }) {
       )}
 
       {/* Expense list */}
-      {!loading && overview && (
+      {!loading && (
         <div className="cost-panel cost-expense-list">
           {expenses.length === 0 ? (
             <p>No expenses recorded yet.</p>

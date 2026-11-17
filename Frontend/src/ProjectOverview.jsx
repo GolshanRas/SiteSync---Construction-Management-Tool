@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { authHeaders } from "./permissions";
 
 const API = "http://localhost:5000";
 const CATEGORIES = ["Materials", "Labour", "Equipment", "Travel", "Other"];
@@ -38,7 +39,7 @@ function ProjectOverview({ project, tasks, user, onOpenTasks, onOpenCosts }) {
     setCosts(null);
     setPlanned({});
 
-    const headers = { "X-User-Role": user.role };
+    const headers = authHeaders(user);
 
     async function getJSON(path) {
       const response = await fetch(`${API}${path}`, { headers });
@@ -70,7 +71,7 @@ function ProjectOverview({ project, tasks, user, onOpenTasks, onOpenCosts }) {
     return () => {
       active = false;
     };
-  }, [project.id, user.role]);
+  }, [project.id, user.id, user.role]);
 
   // TASK STATISTICS
 

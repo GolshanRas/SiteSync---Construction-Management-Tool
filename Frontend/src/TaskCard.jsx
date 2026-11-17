@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import TaskForm from "./TaskForm";
+import { can, authHeaders } from "./permissions";
 
 function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
   const [editing, setEditing] = useState(false);
@@ -8,6 +9,12 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [draftStatus, setDraftStatus] = useState(task.status || "Not Started");
+  const canEditTask = can(user.role, "manage_tasks");
+  const isAssignedWorker = (task.workers || []).some((worker) => Number(worker.id) === Number(user.id));
+
+  const canUpdateStatus =
+    can(user.role, "update_status") &&
+  (user.role !== "Worker" || isAssignedWorker);
   useEffect(() => {setDraftStatus(task.status || "Not Started");}, [task.status]);
   // const value = draft === null ? String(task.progress) : draft;
   // const newProgress = Number(value);
@@ -29,12 +36,12 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/tasks/${task.id}`,
+        `http://localhost:5000/api/tasks/${task.id}/status`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Role": user.role,
+            ...authHeaders(user),
           },
           body: JSON.stringify({
             status: draftStatus,
@@ -100,7 +107,7 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
             {task.priority || "Standard"}
           </span>
 
-          {canManage && (
+          {canEditTask && (
             <button
               type="button"
               className="edit-button"
@@ -156,7 +163,7 @@ function TaskCard({ task, user, canManage, onTaskUpdated, onProgressSaved }) {
       
 
 
-      {canManage && (
+      {canUpdateStatus && (
         <form className="progress-form" onSubmit={saveStatus}>
           <label htmlFor={`status-${task.id}`}>Update status</label>
 

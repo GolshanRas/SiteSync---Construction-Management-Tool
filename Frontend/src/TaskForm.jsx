@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authHeaders } from "./permissions";
 
 // One form for both jobs:
 //   - creating a task: pass `project` (no `task`)
@@ -32,9 +33,7 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
     let ignore = false;
 
     fetch("http://localhost:5000/api/assignees", {
-      headers: {
-        "X-User-Role": user.role,
-      },
+      headers: authHeaders(user),
     })
       .then((response) =>
         response.json().then((data) => ({ ok: response.ok, data }))
@@ -62,7 +61,7 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
     return () => {
       ignore = true;
     };
-  }, [user.role]);
+  }, [user.id, user.role]);
 
   const workers = people.filter((person) => person.role === "Worker");
   const supervisors = people.filter((person) => person.role === "Supervisor");
@@ -118,7 +117,7 @@ function TaskForm({ project, task, user, onSaved, onCancel }) {
           method: isEdit ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Role": user.role,
+            ...authHeaders(user),
           },
           body: JSON.stringify(body),
         }

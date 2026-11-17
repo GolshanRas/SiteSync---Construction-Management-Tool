@@ -115,6 +115,18 @@ class Database:
             WHERE status = 'Not Started'
         """)
 
+        query.execute("""
+            CREATE TABLE IF NOT EXISTS ProjectMember (
+                project_id INTEGER NOT NULL,
+                account_id INTEGER NOT NULL,
+                PRIMARY KEY (project_id, account_id),
+                FOREIGN KEY (project_id)
+                    REFERENCES Project(id) ON DELETE CASCADE,
+                FOREIGN KEY (account_id)
+                    REFERENCES Account(id) ON DELETE CASCADE
+            )
+        """)
+
         con.commit()
         con.close()
 
@@ -712,3 +724,64 @@ class Database:
             return result.rowcount > 0
         finally:
             con.close()
+    
+    def isProjectMember(self, project_id, account_id):
+        con = self.getConnection()
+        row = con.execute("""
+            SELECT 1
+            FROM ProjectMember
+            WHERE project_id = ? AND account_id = ?
+        """, (project_id, account_id)).fetchone()
+        con.close()
+        return row is not None
+
+    def getProjectMembers(self, project_id):
+        con = self.getConnection()
+        rows = con.execute("""
+            SELECT a.id, a.firstname, a.lastname, a.role
+            FROM ProjectMember pm
+            JOIN Account a ON a.id = pm.account_id
+            WHERE pm.project_id = ?
+            ORDER BY a.lastname, a.firstname
+        """, (project_id,)).fetchall()
+        con.close()
+
+        return [
+            {
+                "id": row[0],
+                "firstname": row[1],
+                "lastname": row[2],
+                "role": row[3]
+            }
+            for row in rows
+        ]
+
+    def addProjectMember(self, project_id, account_id):
+        con = self.getConnection()
+        con.execute("""
+            INSERT OR IGNORE INTO ProjectMember
+            (project_id, account_id)
+            VALUES (?, ?)
+        """, (project_id, account_id))
+        con.commit()
+        con.close()
+
+    def removeProjectMember(self, project_id, account_id):
+        con = self.getConnection()
+        con.execute("""
+            DELETE FROM ProjectMember
+            WHERE project_id = ? AND account_id = ?
+        """, (project_id, account_id))
+        con.commit()
+        con.close()
+
+    def getProjectsForUser(self, account_id, role):
+        projects = self.getProjects()
+
+        if role in ("Admin", "Project Manager"):
+            return projects
+
+        return [
+            project for project in projects
+            if self.isProjectMember(project[0], account_id)
+        ]
